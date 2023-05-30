@@ -8,7 +8,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
 from .models import Product
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, generics
 import json
 User = get_user_model()
 
@@ -24,12 +24,24 @@ class GetProduct(APIView):
     permission_classes = [AllowAny, ]
 
     def get(self, request):
-        
+
         id = request.GET['id']
         product = Product.objects.get(id=id)
         serilizer = ProductSerilizer(product)
 
         return Response(serilizer.data)
+
+
+class GetProductsWithParam(generics.ListAPIView):
+    permission_classes = [AllowAny, ]
+    queryset = Product.objects.all()
+    serializer_class = ProductSerilizer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if 'amazing' in self.request.GET:
+            queryset = queryset.filter(isAmazing=True)
+        return queryset
 
 
 class GetUser(APIView):
