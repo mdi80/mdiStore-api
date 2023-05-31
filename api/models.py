@@ -17,7 +17,7 @@ class CommentProduct(models.Model):
 
 
 class Category(models.Model):
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=50)
     image = models.ImageField(
         upload_to="category_image/", default="product_image/p1.jpg")
 
