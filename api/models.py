@@ -7,7 +7,7 @@ from django.db.models import Avg
 
 
 class ImageProduct(models.Model):
-    imagepr = models.ImageField(upload_to="product_image/")
+    image = models.ImageField(upload_to="product_image/")
 
 
 class CommentProduct(models.Model):
