@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
-from .views import current_user, UserViewSet, GetUser, GetProduct, GetProductsWithParam
+from .views import current_user, UserViewSet, GetUser, GetProduct, GetProductsWithParam,GetCategories
 from rest_framework import routers
 
 router = routers.DefaultRouter()
@@ -14,5 +14,7 @@ urlpatterns = [
     path('get-product/', GetProduct.as_view(), name='getproduct'),
     path('get-product-with-param/',
          GetProductsWithParam.as_view(), name='getproducts'),
-
+    path('get-categories/',
+         GetCategories.as_view(), name='getproducts'),
+    
 ]

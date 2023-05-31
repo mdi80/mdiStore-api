@@ -1,15 +1,18 @@
+import json
 from django.shortcuts import render
-from .serilizers import UserSerilizer, ProductSerilizer
+from django.contrib.auth import get_user_model, authenticate, login
+
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model, authenticate, login
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
-from .models import Product
 from rest_framework import viewsets, status, generics
-import json
+
+from .models import Product, Category
+from .serilizers import UserSerilizer, ProductSerilizer, CategorySerilizer
+
 User = get_user_model()
 
 
@@ -41,6 +44,16 @@ class GetProductsWithParam(generics.ListAPIView):
         queryset = super().get_queryset()
         if 'amazing' in self.request.GET:
             queryset = queryset.filter(isAmazing=True)
+        return queryset
+
+
+class GetCategories(generics.ListAPIView):
+    permission_classes = [AllowAny, ]
+    queryset = Category.objects.all()
+    serializer_class = CategorySerilizer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
         return queryset
 
 
