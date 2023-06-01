@@ -132,4 +132,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ALLOWED_HOSTS = ["mdi80nz.pythonanywhere.com", "localhost"]
 
 MEDIA_URL = "/"
-MEDIA_ROOT = "/"
+MEDIA_ROOT = "./"
