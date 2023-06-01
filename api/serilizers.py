@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Product, Category, ImageProduct
+from django.db.models import Avg
 
 User = get_user_model()
 
@@ -24,15 +25,16 @@ class UserSerilizer(serializers.ModelSerializer):
 
 class ProductSerilizer(serializers.ModelSerializer):
     image = ImageProductSerializer(many=True, read_only=True)
+    rating = serializers.SerializerMethodField()
     # image_urls = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = ['id', 'title', 'productCategory', 'description',
-                  'price', 'discount', 'isAmazing', 'image']
+                  'price', 'discount', 'isAmazing', 'image', 'rating']
 
-    # def get_image_urls(self, obj):
-    #     return [image.image.url for image in obj.image.all()]
+    def get_rating(self, obj):
+        return obj.rating_set.aggregate(average=Avg('rate'))['average']
 
 
 class CategorySerilizer(serializers.ModelSerializer):
