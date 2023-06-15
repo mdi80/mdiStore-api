@@ -40,3 +40,14 @@ class Rating(models.Model):
     rate = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)])
     created = models.DateField(auto_now_add=True)
+
+
+class ViewProduct(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+
+class SearchProduct(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    text = models.CharField(max_length=100)
+    created = models.DateField(auto_now_add=True)
