@@ -23,17 +23,11 @@ def current_user(request):
     return Response(serilizer.data)
 
 
-class GetProduct(APIView):
+class GetProduct(generics.RetrieveAPIView):
     permission_classes = [AllowAny, ]
-
-    def get(self, request):
-
-        id = request.GET['id']
-        product = Product.objects.get(id=id)
-        serilizer = ProductSerilizer(product)
-
-        return Response(serilizer.data)
-
+    queryset = Product.objects.all()
+    serializer_class = ProductSerilizer
+    lookup_field = 'id'
 
 class GetProductsWithParam(generics.ListAPIView):
     permission_classes = [AllowAny, ]
