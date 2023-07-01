@@ -33,6 +33,10 @@ class Product(models.Model):
     isAmazing = models.BooleanField(default=False)
     image = models.ManyToManyField(ImageProduct)
 
+    @property
+    def category_name(self):
+        return self.productCategory.title
+
 
 class Rating(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)

@@ -31,7 +31,7 @@ class ProductSerilizer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'title', 'productCategory', 'description',
-                  'price', 'discount', 'isAmazing', 'image', 'rating']
+                  'price', 'discount', 'isAmazing', 'image', 'rating', 'category_name']
 
     def get_rating(self, obj):
         return obj.rating_set.aggregate(average=Avg('rate'))['average']
