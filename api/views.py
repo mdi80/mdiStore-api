@@ -16,7 +16,7 @@ from .serilizers import UserSerilizer, ProductSerilizer, CategorySerilizer
 User = get_user_model()
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def current_user(request):
     serilizer = UserSerilizer(request.user)
@@ -24,25 +24,32 @@ def current_user(request):
 
 
 class GetProduct(generics.RetrieveAPIView):
-    permission_classes = [AllowAny, ]
+    permission_classes = [
+        AllowAny,
+    ]
     queryset = Product.objects.all()
     serializer_class = ProductSerilizer
-    lookup_field = 'id'
+    lookup_field = "id"
+
 
 class GetProductsWithParam(generics.ListAPIView):
-    permission_classes = [AllowAny, ]
+    permission_classes = [
+        AllowAny,
+    ]
     queryset = Product.objects.all()
     serializer_class = ProductSerilizer
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        if 'amazing' in self.request.GET:
+        if "amazing" in self.request.GET:
             queryset = queryset.filter(isAmazing=True)
         return queryset
 
 
 class GetCategories(generics.ListAPIView):
-    permission_classes = [AllowAny, ]
+    permission_classes = [
+        AllowAny,
+    ]
     queryset = Category.objects.all()
     serializer_class = CategorySerilizer
 
@@ -52,12 +59,16 @@ class GetCategories(generics.ListAPIView):
 
 
 class GetUser(APIView):
-    authentication_classes = [TokenAuthentication, ]
-    permission_classes = [IsAuthenticated, ]
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def get(self, request):
         user = request.user
-        return Response({'username': user.username, 'email': user.email})
+        return Response({"username": user.username, "email": user.email})
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -67,22 +78,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         print("here")
-        username = request.data.get('username')
-        email = request.data.get('email')
-        password = request.data.get('password')
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password = request.data.get("password")
 
         if User.objects.filter(username=username).exists():
-            return Response({'message': "Username already exists!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Username already exists!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Create the user account
         user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
+            username=username, email=email, password=password
         )
         user = authenticate(request, username=username, password=password)
 
         login(request, user)
 
         token, _ = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key})
+        return Response({"token": token.key})
