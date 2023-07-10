@@ -55,7 +55,10 @@ class ProductSerilizer(serializers.ModelSerializer):
         ]
 
     def get_rating(self, obj):
-        return obj.rating_set.aggregate(average=Avg("rate"))["average"]
+        rating = obj.rating_set.aggregate(average=Avg("rate"))["average"]
+        if rating == None:
+            rating = 0
+        return rating
 
     def get_color_names(self, obj):
         color_values = obj.productcolors_set.values_list("color", flat=True)

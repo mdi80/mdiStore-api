@@ -16,13 +16,6 @@ def convert_rgb_to_names(rgb_tuple):
     return names[index]
 
 
-# def get_color_name(requested_colour):
-#     try:
-#         return webcolors.hex_to_name(requested_colour)
-#     except ValueError:
-#         return closest_colour(requested_colour)
-
-
 def get_color_name(hex):
     try:
         return webcolors.hex_to_name(hex)
