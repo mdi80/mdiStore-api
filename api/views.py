@@ -41,9 +41,40 @@ class GetProductsWithParam(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        print(self.request.GET)
         if "amazing" in self.request.GET:
             queryset = queryset.filter(isAmazing=True)
+        if "categoryId" in self.request.GET:
+            queryset = queryset.filter(
+                productCategory=int(self.request.GET["categoryId"])
+            )
+        if "minPrice" in self.request.GET:
+            queryset = queryset.exclude(price__lt=float(self.request.GET["minPrice"]))
+        if "maxPrice" in self.request.GET:
+            queryset = queryset.exclude(price__gt=float(self.request.GET["maxPrice"]))
+        if "hasDiscount" in self.request.GET:
+            queryset = queryset.exclude(discount=0)
+
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        serializer = self.get_serializer(queryset, many=True)
+        serialized_data = serializer.data
+        print(len(serialized_data))
+        for row in serialized_data[:]:
+            if "minRating" in self.request.GET:
+                if row["rating"] < float(self.request.GET["minRating"]):
+                    serialized_data.remove(row)
+
+            if "colors" in self.request.GET:
+                if not set(self.request.GET["colors"].split(",")).intersection(
+                    set(row["color_values"])
+                ):
+                    serialized_data.remove(row)
+
+        return Response(serialized_data)
 
 
 class GetCategories(generics.ListAPIView):
@@ -56,6 +87,11 @@ class GetCategories(generics.ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        li = self.get_queryset()
+        print(li)
+        return li
 
 
 class GetUser(APIView):
