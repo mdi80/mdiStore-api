@@ -172,7 +172,7 @@ class AddActToCommnet(APIView):
         try:
             user = get_user_model().objects.filter(id=request.GET["user"]).first()
             commentId = request.GET["comment"]
-            status = int(request.GET["status"])
+            mstatus = int(request.GET["status"])
 
             if (
                 commentUserLike.objects.filter(
@@ -181,11 +181,11 @@ class AddActToCommnet(APIView):
                 ).count()
                 == 0
             ):
-                if not status == -1:  # ignore if row does not exists
+                if not mstatus == -1:  # ignore if row does not exists
                     actOnComment = commentUserLike(
                         user=user,
                         comment=CommentProduct.objects.filter(id=commentId).first(),
-                        liked=(status == 1),
+                        liked=(mstatus == 1),
                     )
                     actOnComment.save()
             else:
@@ -193,10 +193,10 @@ class AddActToCommnet(APIView):
                     user=user,
                     comment=CommentProduct.objects.filter(id=commentId).first(),
                 ).first()
-                if status == -1:  # delete row
+                if mstatus == -1:  # delete row
                     comAct.delete()
                 else:
-                    comAct.liked = status == 1
+                    comAct.liked = mstatus == 1
             return Response(status=status.HTTP_202_ACCEPTED)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
