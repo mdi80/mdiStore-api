@@ -1,7 +1,8 @@
 import json
 from django.shortcuts import render
 from django.contrib.auth import get_user_model, authenticate, login
-
+from django.db import IntegrityError, ProgrammingError
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -22,11 +23,46 @@ from .serilizers import UserSerilizer, ProductSerilizer, CategorySerilizer
 User = get_user_model()
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def current_user(request):
-    serilizer = UserSerilizer(request.user)
-    return Response(serilizer.data)
+class GetUser(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        user = request.user
+        return Response({"username": user.username, "email": user.email})
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerilizer
+    permission_classes = (AllowAny,)
+
+    def create(self, request):
+        print("here")
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {"message": "Username already exists!"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Create the user account
+        user = User.objects.create_user(
+            username=username, email=email, password=password
+        )
+        user = authenticate(request, username=username, password=password)
+
+        login(request, user)
+
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key})
 
 
 class GetProduct(generics.RetrieveAPIView):
@@ -137,7 +173,7 @@ class AddFavoriteProduct(APIView):
         try:
             user = get_user_model().objects.filter(id=request.GET["user"]).first()
             productId = request.GET["product"]
-            liked = request.GET["liked"] == 1
+            liked = request.GET["liked"] == "1"
             if liked:
                 fav = UserFavoriteProduct(
                     user=user, product=Product.objects.filter(id=productId).first()
@@ -152,9 +188,13 @@ class AddFavoriteProduct(APIView):
                     return Response(status=status.HTTP_202_ACCEPTED)
 
             return Response(status=status.HTTP_201_CREATED)
+        except IntegrityError:
+            return Response("Already saved!", status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response("Already deleted!", status=status.HTTP_200_OK)
 
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except ProgrammingError as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddActToCommnet(APIView):
@@ -201,44 +241,3 @@ class AddActToCommnet(APIView):
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-
-class GetUser(APIView):
-    authentication_classes = [
-        TokenAuthentication,
-    ]
-    permission_classes = [
-        IsAuthenticated,
-    ]
-
-    def get(self, request):
-        user = request.user
-        return Response({"username": user.username, "email": user.email})
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerilizer
-    permission_classes = (AllowAny,)
-
-    def create(self, request):
-        print("here")
-        username = request.data.get("username")
-        email = request.data.get("email")
-        password = request.data.get("password")
-
-        if User.objects.filter(username=username).exists():
-            return Response(
-                {"message": "Username already exists!"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Create the user account
-        user = User.objects.create_user(
-            username=username, email=email, password=password
-        )
-        user = authenticate(request, username=username, password=password)
-
-        login(request, user)
-
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key})
