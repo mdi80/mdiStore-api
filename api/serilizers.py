@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Product, Category, ImageProduct, ProductColors
+from .models import *
 from django.db.models import Avg
 from .utils import get_color_name
 
@@ -35,8 +35,10 @@ class ProductSerilizer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
     sales = serializers.SerializerMethodField()
     views = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
     color_names = serializers.SerializerMethodField()
     color_values = serializers.SerializerMethodField()
+    fav = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -48,11 +50,13 @@ class ProductSerilizer(serializers.ModelSerializer):
             "price",
             "discount",
             "isAmazing",
-            "image",
             "rating",
             "sales",
             "views",
+            "fav",
+            "comments",
             "category_name",
+            "image",
             "color_names",
             "color_values",
         ]
@@ -69,6 +73,16 @@ class ProductSerilizer(serializers.ModelSerializer):
     def get_sales(self, obj):
         return obj.saleproduct_set.count()
 
+    def get_comments(self, obj):
+        return obj.commentproduct_set.count()
+
+    def get_fav(self, obj):
+        fav = UserFavoriteProduct.objects.filter(
+            user=self.context["request"].user, product=obj
+        ).count()
+
+        return fav >= 1
+
     def get_color_names(self, obj):
         color_values = obj.productcolors_set.values_list("color", flat=True)
         color_names = []
@@ -84,5 +98,3 @@ class CategorySerilizer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
-
-

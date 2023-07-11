@@ -12,20 +12,6 @@ class ImageProduct(models.Model):
     image = models.ImageField(upload_to="product_image/")
 
 
-class CommentProduct(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    comment = models.CharField(max_length=1000)
-    created = models.DateField(auto_now_add=True)
-    created = models.DateField(auto_now_add=True)
-
-
-class commentUserLike(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    comment = models.ForeignKey(CommentProduct, on_delete=models.CASCADE)
-    liked = models.BooleanField(null=False)
-
-
-
 class Category(models.Model):
     title = models.CharField(max_length=50)
     image = models.ImageField(
@@ -48,11 +34,30 @@ class Product(models.Model):
         return self.productCategory.title
 
 
+class CommentProduct(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    comment = models.CharField(max_length=1000, null=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    isLiked = models.BooleanField()
+    created = models.DateField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "product")
+
+
+class commentUserLike(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    comment = models.ForeignKey(CommentProduct, on_delete=models.CASCADE)
+    liked = models.BooleanField(null=False)
+
+
 class UserFavoriteProduct(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
     class Meta:
         unique_together = ("user", "product")
+
 
 class ProductColors(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
