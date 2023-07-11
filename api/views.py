@@ -11,13 +11,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
 from rest_framework import viewsets, generics, status
 
-from .models import (
-    Product,
-    Category,
-    UserFavoriteProduct,
-    commentUserLike,
-    CommentProduct,
-)
+from .models import *
 from .serilizers import UserSerilizer, ProductSerilizer, CategorySerilizer
 
 User = get_user_model()
@@ -42,7 +36,6 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
 
     def create(self, request):
-        print("here")
         username = request.data.get("username")
         email = request.data.get("email")
         password = request.data.get("password")
@@ -66,24 +59,46 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class GetProduct(generics.RetrieveAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
     permission_classes = [
-        AllowAny,
+        IsAuthenticated,
     ]
     queryset = Product.objects.all()
     serializer_class = ProductSerilizer
     lookup_field = "id"
 
+    def get(self, request, *args, **kwargs):
+        try:
+            productId = self.kwargs.get("id")
+            product = Product.objects.get(id=productId)
+            user = request.user
+
+            if ViewProduct.objects.filter(user=user, product=product).count() == 0:
+                print("Add view")
+                view = ViewProduct(user=user, product=product)
+                view.save()
+
+        except:
+            print("Error while add Product view")
+            pass
+
+        return super().get(request, *args, **kwargs)
+
 
 class GetProductsWithParam(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
     permission_classes = [
-        AllowAny,
+        IsAuthenticated,
     ]
     queryset = Product.objects.all()
     serializer_class = ProductSerilizer
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        print(self.request.GET)
         if "amazing" in self.request.GET:
             queryset = queryset.filter(isAmazing=True)
         if "categoryId" in self.request.GET:
@@ -97,9 +112,9 @@ class GetProductsWithParam(generics.ListAPIView):
         if "hasDiscount" in self.request.GET:
             queryset = queryset.exclude(discount=0)
         if "sort-mostExpensive" in self.request.GET:
-            queryset = queryset.order_by("price")
-        if "sort-lessExpensive" in self.request.GET:
             queryset = queryset.order_by("-price")
+        if "sort-lessExpensive" in self.request.GET:
+            queryset = queryset.order_by("price")
 
         return queryset
 
@@ -108,7 +123,6 @@ class GetProductsWithParam(generics.ListAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         serialized_data = serializer.data
-        print(len(serialized_data))
         for row in serialized_data[:]:
             if "minRating" in self.request.GET:
                 if row["rating"] < float(self.request.GET["minRating"]):
@@ -145,9 +159,13 @@ class GetProductsWithParam(generics.ListAPIView):
 
 
 class GetCategories(generics.ListAPIView):
-    permission_classes = [
-        AllowAny,
+    authentication_classes = [
+        TokenAuthentication,
     ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
     queryset = Category.objects.all()
     serializer_class = CategorySerilizer
 
@@ -162,16 +180,16 @@ class GetCategories(generics.ListAPIView):
 
 
 class AddFavoriteProduct(APIView):
-    # authentication_classes = [
-    #     TokenAuthentication,
-    # ]
+    authentication_classes = [
+        TokenAuthentication,
+    ]
     permission_classes = [
-        AllowAny,
+        IsAuthenticated,
     ]
 
     def get(self, request):
         try:
-            user = get_user_model().objects.filter(id=request.GET["user"]).first()
+            user = request.user
             productId = request.GET["product"]
             liked = request.GET["liked"] == "1"
             if liked:
@@ -198,19 +216,16 @@ class AddFavoriteProduct(APIView):
 
 
 class AddActToCommnet(APIView):
-    # authentication_classes = [
-    #     TokenAuthentication,
-    # ]
-    # permission_classes = [
-    #     IsAuthenticated,
-    # ]
+    authentication_classes = [
+        TokenAuthentication,
+    ]
     permission_classes = [
-        AllowAny,
+        IsAuthenticated,
     ]
 
     def get(self, request):
         try:
-            user = get_user_model().objects.filter(id=request.GET["user"]).first()
+            user = request.user
             commentId = request.GET["comment"]
             mstatus = int(request.GET["status"])
 
@@ -241,3 +256,18 @@ class AddActToCommnet(APIView):
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
+
+class GetComments(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = Category.objects.all()
+    serializer_class = CategorySerilizer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset
