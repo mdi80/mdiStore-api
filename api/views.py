@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
-from rest_framework import viewsets, status, generics
+from rest_framework import viewsets, generics, status
 
 from .models import (
     Product,
@@ -134,13 +134,27 @@ class AddFavoriteProduct(APIView):
     ]
 
     def get(self, request):
-        user = get_user_model().objects.filter(id=request.GET["user"]).first()
-        productId = request.GET["product"]
-        fav = UserFavoriteProduct(
-            user=user, product=Product.objects.filter(id=productId).first()
-        )
-        fav.save()
-        return Response("Successful!")
+        try:
+            user = get_user_model().objects.filter(id=request.GET["user"]).first()
+            productId = request.GET["product"]
+            liked = request.GET["liked"] == 1
+            if liked:
+                fav = UserFavoriteProduct(
+                    user=user, product=Product.objects.filter(id=productId).first()
+                )
+                fav.save()
+            else:
+                fav = UserFavoriteProduct.objects.get(
+                    user=user, product=Product.objects.filter(id=productId).first()
+                )
+                if fav:
+                    fav.delete()
+                    return Response(status=status.HTTP_202_ACCEPTED)
+
+            return Response(status=status.HTTP_201_CREATED)
+
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddActToCommnet(APIView):
@@ -158,14 +172,32 @@ class AddActToCommnet(APIView):
         try:
             user = get_user_model().objects.filter(id=request.GET["user"]).first()
             commentId = request.GET["comment"]
-            liked = request.GET["liked"] == 1
-            actOnComment = commentUserLike(
-                user=user,
-                comment=CommentProduct.objects.filter(id=commentId).first(),
-                liked=liked,
-            )
-            actOnComment.save()
-            return Response("Successful!")
+            status = int(request.GET["status"])
+
+            if (
+                commentUserLike.objects.filter(
+                    user=user,
+                    comment=CommentProduct.objects.filter(id=commentId).first(),
+                ).count()
+                == 0
+            ):
+                if not status == -1:  # ignore if row does not exists
+                    actOnComment = commentUserLike(
+                        user=user,
+                        comment=CommentProduct.objects.filter(id=commentId).first(),
+                        liked=(status == 1),
+                    )
+                    actOnComment.save()
+            else:
+                comAct = commentUserLike.objects.filter(
+                    user=user,
+                    comment=CommentProduct.objects.filter(id=commentId).first(),
+                ).first()
+                if status == -1:  # delete row
+                    comAct.delete()
+                else:
+                    comAct.liked = status == 1
+            return Response(status=status.HTTP_202_ACCEPTED)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
