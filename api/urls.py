@@ -1,15 +1,6 @@
 from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
-from .views import (
-    UserViewSet,
-    GetUser,
-    GetProduct,
-    GetProductsWithParam,
-    GetCategories,
-    AddActToCommnet,
-    AddFavoriteProduct,
-    GetComments,
-)
+from .views import *
 from rest_framework import routers
 
 router = routers.DefaultRouter()
@@ -25,4 +16,6 @@ urlpatterns = [
     path("add-commnet-like/", AddActToCommnet.as_view(), name="addCommentLike"),
     path("add-product-fav/", AddFavoriteProduct.as_view(), name="addProductFav"),
     path("get-comments/", GetComments.as_view(), name="getComments"),
+    path("add-comment/", AddComment.as_view(), name="addComment"),
+    path("alter-comment/", AlterComment.as_view(), name="alterComment"),
 ]

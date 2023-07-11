@@ -98,3 +98,27 @@ class CategorySerilizer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
+
+
+class CommentSerilizer(serializers.ModelSerializer):
+    likes = serializers.SerializerMethodField()
+    dislikes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CommentProduct
+        fields = [
+            "id",
+            "user",
+            "comment",
+            "product",
+            "isLiked",
+            "created",
+            "likes",
+            "dislikes",
+        ]
+
+    def get_likes(self, obj):
+        return obj.commentuserlike_set.filter(liked=True).count()
+
+    def get_dislikes(self, obj):
+        return obj.commentuserlike_set.filter(liked=False).count()

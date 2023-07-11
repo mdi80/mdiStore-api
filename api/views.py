@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework import viewsets, generics, status
 
 from .models import *
-from .serilizers import UserSerilizer, ProductSerilizer, CategorySerilizer
+from .serilizers import *
 
 User = get_user_model()
 
@@ -265,9 +265,110 @@ class GetComments(generics.ListAPIView):
         IsAuthenticated,
     ]
 
-    queryset = Category.objects.all()
-    serializer_class = CategorySerilizer
+    queryset = CommentProduct.objects.all()
+    serializer_class = CommentSerilizer
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        pId = self.request.GET["productId"]
+        queryset = queryset.filter(product=Product.objects.get(id=pId))
+
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+
+            serializer = self.get_serializer(queryset, many=True)
+            serialized_data = serializer.data
+
+            returnedData = dict()
+            returnedData["lenght"] = len(serialized_data)
+
+            for row in serialized_data:
+                userId = row["user"]
+                try:
+                    row["username"] = get_user_model().objects.get(id=userId).username
+                except:
+                    row["username"] = "Unknown User"
+
+            if "endIndex" in self.request.GET:
+                serialized_data = serialized_data[: int(self.request.GET["endIndex"])]
+            if "startIndex" in self.request.GET:
+                serialized_data = serialized_data[int(self.request.GET["startIndex"]) :]
+            returnedData["data"] = serialized_data
+            return Response(returnedData)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class AddComment(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def post(self, request):
+        try:
+            productId = request.POST["productId"]
+            comment = request.POST["comment"]
+            isLike = request.POST["liked"] == 1
+
+            user = request.user
+            product = Product.objects.get(id=productId)
+
+            if (
+                not CommentProduct.objects.filter(product=product, user=user).count()
+                == 0
+            ):
+                return Response(
+                    "Comment Already exists!", status=status.HTTP_400_BAD_REQUEST
+                )
+
+            comment = CommentProduct(
+                product=product, user=user, comment=comment, isLiked=isLike
+            )
+            comment.save()
+
+            return Response("Created Successfuly.", status=status.HTTP_201_CREATED)
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class AlterComment(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+
+            commentId = int(request.GET["commentId"])
+            comment = CommentProduct.objects.get(id=commentId)
+            if not comment.user == user:
+                return Response(
+                    "Current User Not Allowed!", status=status.HTTP_403_FORBIDDEN
+                )
+            if "delete" in request.GET:
+                comment.delete()
+                return Response("Successfuly Deleted", status=status.HTTP_202_ACCEPTED)
+
+            if "comment" in request.GET:
+                comment.comment = request.GET["comment"]
+            if "isLike" in request.GET:
+                comment.isLiked = request.GET["isLike"] == "1"
+            comment.save()
+
+            return Response("Successfuly edited.", status=status.HTTP_202_ACCEPTED)
+        except ObjectDoesNotExist:
+            return Response(
+                "Comment ID does not exists!", status=status.HTTP_406_NOT_ACCEPTABLE
+            )
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
