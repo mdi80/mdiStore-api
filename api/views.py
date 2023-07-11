@@ -54,6 +54,10 @@ class GetProductsWithParam(generics.ListAPIView):
             queryset = queryset.exclude(price__gt=float(self.request.GET["maxPrice"]))
         if "hasDiscount" in self.request.GET:
             queryset = queryset.exclude(discount=0)
+        if "sort-mostExpensive" in self.request.GET:
+            queryset = queryset.order_by('price')
+        if "sort-lessExpensive" in self.request.GET:
+            queryset = queryset.order_by('-price')
 
         return queryset
 
@@ -74,7 +78,23 @@ class GetProductsWithParam(generics.ListAPIView):
                 ):
                     serialized_data.remove(row)
 
-        return Response(serialized_data)
+        returnedData = dict()
+        returnedData["lenght"] = len(serialized_data)
+
+        if "sort-mostSale" in self.request.GET:
+            serialized_data = sorted(serialized_data,key=lambda row: row['sales'],reverse=True)
+        if "sort-mostRating" in self.request.GET:
+            serialized_data = sorted(serialized_data,key=lambda row: row['rating'],reverse=True)
+        if "sort-mostView" in self.request.GET:
+            serialized_data = sorted(serialized_data,key=lambda row: row['views'],reverse=True)
+
+
+        if "endIndex" in self.request.GET:
+            serialized_data = serialized_data[: int(self.request.GET["endIndex"])]
+        if "startIndex" in self.request.GET:
+            serialized_data = serialized_data[int(self.request.GET["startIndex"]) :]
+        returnedData["data"] = serialized_data
+        return Response(returnedData)
 
 
 class GetCategories(generics.ListAPIView):

@@ -33,9 +33,10 @@ class ColorsSerilizer(serializers.ModelSerializer):
 class ProductSerilizer(serializers.ModelSerializer):
     image = ImageProductSerializer(many=True, read_only=True)
     rating = serializers.SerializerMethodField()
+    sales = serializers.SerializerMethodField()
+    views = serializers.SerializerMethodField()
     color_names = serializers.SerializerMethodField()
     color_values = serializers.SerializerMethodField()
-    # image_urls = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -49,6 +50,8 @@ class ProductSerilizer(serializers.ModelSerializer):
             "isAmazing",
             "image",
             "rating",
+            "sales",
+            "views",
             "category_name",
             "color_names",
             "color_values",
@@ -59,6 +62,12 @@ class ProductSerilizer(serializers.ModelSerializer):
         if rating == None:
             rating = 0
         return rating
+
+    def get_views(self, obj):
+        return obj.viewproduct_set.count()
+
+    def get_sales(self, obj):
+        return obj.saleproduct_set.count()
 
     def get_color_names(self, obj):
         color_values = obj.productcolors_set.values_list("color", flat=True)
@@ -75,3 +84,5 @@ class CategorySerilizer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
+
+
