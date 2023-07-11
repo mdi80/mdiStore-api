@@ -19,6 +19,13 @@ class CommentProduct(models.Model):
     created = models.DateField(auto_now_add=True)
 
 
+class commentUserLike(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    comment = models.ForeignKey(CommentProduct, on_delete=models.CASCADE)
+    liked = models.BooleanField(null=False)
+
+
+
 class Category(models.Model):
     title = models.CharField(max_length=50)
     image = models.ImageField(
@@ -34,15 +41,23 @@ class Product(models.Model):
     discount = models.DecimalField(max_digits=10, decimal_places=2)
     isAmazing = models.BooleanField(default=False)
     image = models.ManyToManyField(ImageProduct)
+    active = models.BooleanField(default=True)
 
     @property
     def category_name(self):
         return self.productCategory.title
 
 
+class UserFavoriteProduct(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    class Meta:
+        unique_together = ("user", "product")
+
 class ProductColors(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     color = models.CharField(max_length=7)
+
 
 class Rating(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
@@ -50,10 +65,35 @@ class Rating(models.Model):
     rate = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     created = models.DateField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ("user", "product")
+
 
 class ViewProduct(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("user", "product")
+
+
+class SaleProduct(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField(auto_now_add=True)
+
+
+class CartUser(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
+    products = models.ManyToManyField(Product)
+
+
+class CartHistory(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
+    products = models.ManyToManyField(Product)
+    cartPrice = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField(auto_now_add=True)
 
 
 class SearchProduct(models.Model):
