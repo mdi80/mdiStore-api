@@ -10,7 +10,13 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
 from rest_framework import viewsets, status, generics
 
-from .models import Product, Category
+from .models import (
+    Product,
+    Category,
+    UserFavoriteProduct,
+    commentUserLike,
+    CommentProduct,
+)
 from .serilizers import UserSerilizer, ProductSerilizer, CategorySerilizer
 
 User = get_user_model()
@@ -55,9 +61,9 @@ class GetProductsWithParam(generics.ListAPIView):
         if "hasDiscount" in self.request.GET:
             queryset = queryset.exclude(discount=0)
         if "sort-mostExpensive" in self.request.GET:
-            queryset = queryset.order_by('price')
+            queryset = queryset.order_by("price")
         if "sort-lessExpensive" in self.request.GET:
-            queryset = queryset.order_by('-price')
+            queryset = queryset.order_by("-price")
 
         return queryset
 
@@ -82,12 +88,17 @@ class GetProductsWithParam(generics.ListAPIView):
         returnedData["lenght"] = len(serialized_data)
 
         if "sort-mostSale" in self.request.GET:
-            serialized_data = sorted(serialized_data,key=lambda row: row['sales'],reverse=True)
+            serialized_data = sorted(
+                serialized_data, key=lambda row: row["sales"], reverse=True
+            )
         if "sort-mostRating" in self.request.GET:
-            serialized_data = sorted(serialized_data,key=lambda row: row['rating'],reverse=True)
+            serialized_data = sorted(
+                serialized_data, key=lambda row: row["rating"], reverse=True
+            )
         if "sort-mostView" in self.request.GET:
-            serialized_data = sorted(serialized_data,key=lambda row: row['views'],reverse=True)
-
+            serialized_data = sorted(
+                serialized_data, key=lambda row: row["views"], reverse=True
+            )
 
         if "endIndex" in self.request.GET:
             serialized_data = serialized_data[: int(self.request.GET["endIndex"])]
@@ -111,7 +122,52 @@ class GetCategories(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         li = self.get_queryset()
         print(li)
-        return li
+        return Response(li)
+
+
+class AddFavoriteProduct(APIView):
+    # authentication_classes = [
+    #     TokenAuthentication,
+    # ]
+    permission_classes = [
+        AllowAny,
+    ]
+
+    def get(self, request):
+        user = get_user_model().objects.filter(id=request.GET["user"]).first()
+        productId = request.GET["product"]
+        fav = UserFavoriteProduct(
+            user=user, product=Product.objects.filter(id=productId).first()
+        )
+        fav.save()
+        return Response("Successful!")
+
+
+class AddActToCommnet(APIView):
+    # authentication_classes = [
+    #     TokenAuthentication,
+    # ]
+    # permission_classes = [
+    #     IsAuthenticated,
+    # ]
+    permission_classes = [
+        AllowAny,
+    ]
+
+    def get(self, request):
+        try:
+            user = get_user_model().objects.filter(id=request.GET["user"]).first()
+            commentId = request.GET["comment"]
+            liked = request.GET["liked"] == 1
+            actOnComment = commentUserLike(
+                user=user,
+                comment=CommentProduct.objects.filter(id=commentId).first(),
+                liked=liked,
+            )
+            actOnComment.save()
+            return Response("Successful!")
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetUser(APIView):

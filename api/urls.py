@@ -7,6 +7,8 @@ from .views import (
     GetProduct,
     GetProductsWithParam,
     GetCategories,
+    AddActToCommnet,
+    AddFavoriteProduct,
 )
 from rest_framework import routers
 
@@ -21,4 +23,6 @@ urlpatterns = [
     path("get-product/<int:id>/", GetProduct.as_view(), name="getproduct"),
     path("get-product-with-param/", GetProductsWithParam.as_view(), name="getproducts"),
     path("get-categories/", GetCategories.as_view(), name="getproducts"),
+    path("add-commnet-like/", AddActToCommnet.as_view(), name="addCommentLike"),
+    path("add-product-fav/", AddFavoriteProduct.as_view(), name="addProductFav"),
 ]
