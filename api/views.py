@@ -308,7 +308,7 @@ class AddComment(APIView):
     def post(self, request):
         try:
             productId = request.POST["productId"]
-            comment = request.POST["comment"]
+            commentMess = request.POST["comment"]
             isLike = request.POST["liked"] == 1
 
             user = request.user
@@ -323,7 +323,7 @@ class AddComment(APIView):
                 )
 
             comment = CommentProduct(
-                product=product, user=user, comment=comment, isLiked=isLike
+                product=product, user=user, comment=commentMess, isLiked=isLike
             )
             comment.save()
 
