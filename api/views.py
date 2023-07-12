@@ -307,9 +307,9 @@ class AddComment(APIView):
 
     def post(self, request):
         try:
-            productId = request.POST["productId"]
-            commentMess = request.POST["comment"]
-            isLike = request.POST["liked"] == "1"
+            productId = int(request.body["productId"])
+            commentMess = request.body["comment"]
+            isLike = int(request.body["liked"]) == 1
 
             user = request.user
             product = Product.objects.get(id=productId)
