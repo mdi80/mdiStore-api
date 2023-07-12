@@ -173,11 +173,6 @@ class GetCategories(generics.ListAPIView):
         queryset = super().get_queryset()
         return queryset
 
-    def list(self, request, *args, **kwargs):
-        li = self.get_queryset()
-        print(li)
-        return Response(li)
-
 
 class AddFavoriteProduct(APIView):
     authentication_classes = [
