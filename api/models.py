@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Avg
 import datetime
 from .utils import get_color_name
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -72,6 +73,19 @@ class Rating(models.Model):
 
     class Meta:
         unique_together = ("user", "product")
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(rate__gte=0) & models.Q(rate__lte=5),
+                name="check_rate_range",
+            )
+        ]
+
+    # def clean(self):
+    #     if (
+    #         SaleProduct.objects.filter(user=self.user, product=self.product).count()
+    #         == 0
+    #     ):
+    #         raise ValidationError("User did not buy this product!")
 
 
 class ViewProduct(models.Model):

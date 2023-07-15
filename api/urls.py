@@ -18,4 +18,7 @@ urlpatterns = [
     path("get-comments/", GetComments.as_view(), name="getComments"),
     path("add-comment/", AddComment.as_view(), name="addComment"),
     path("alter-comment/", AlterComment.as_view(), name="alterComment"),
+    path("can-add-new-comment/", CanAddCommnet.as_view(), name="canAddComment"),
+    path("rate-product/", AddRate.as_view(), name="rateProduct"),
+    path("get-own-rate/", GetOwnRate.as_view(), name="getOwnRate"),
 ]

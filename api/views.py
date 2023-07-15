@@ -368,3 +368,93 @@ class AlterComment(APIView):
             )
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class CanAddCommnet(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+
+            productId = int(request.GET["productId"])
+
+            product = Product.objects.get(id=productId)
+
+            canAdd = (
+                CommentProduct.objects.filter(product=product, user=user).count() == 0
+            )
+
+            data = {"canAdd": canAdd}
+            return Response(data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class AddRate(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+
+            productId = int(request.GET["productId"])
+
+            product = Product.objects.get(id=productId)
+
+            rate = int(request.GET["rate"])
+
+            # if not SaleProduct.objects.filter(product=product, user=user).exists():
+            #     return Response(
+            #         "User does not buy this product!",
+            #         status=status.HTTP_400_BAD_REQUEST,
+            #     )
+
+            if Rating.objects.filter(product=product, user=user).exists():
+                rateobj = Rating.objects.filter(product=product, user=user).first()
+                rateobj.rate = rate
+                rateobj.save()
+                return Response("Rate updated successfully.")
+
+            else:
+                rateobj = Rating(product=product, user=user, rate=rate)
+                rateobj.save()
+
+                return Response("Rated successfully.")
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetOwnRate(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+
+            productId = int(request.GET["productId"])
+
+            product = Product.objects.get(id=productId)
+            rate = -1
+            if Rating.objects.filter(product=product, user=user).exists():
+                rate = Rating.objects.filter(product=product, user=user).first().rate
+            
+            data = {"rate": rate}
+            return Response(data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)

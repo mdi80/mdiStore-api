@@ -103,6 +103,7 @@ class CategorySerilizer(serializers.ModelSerializer):
 class CommentSerilizer(serializers.ModelSerializer):
     likes = serializers.SerializerMethodField()
     dislikes = serializers.SerializerMethodField()
+    likestatus = serializers.SerializerMethodField()
 
     class Meta:
         model = CommentProduct
@@ -115,6 +116,7 @@ class CommentSerilizer(serializers.ModelSerializer):
             "created",
             "likes",
             "dislikes",
+            "likestatus",
         ]
 
     def get_likes(self, obj):
@@ -122,3 +124,13 @@ class CommentSerilizer(serializers.ModelSerializer):
 
     def get_dislikes(self, obj):
         return obj.commentuserlike_set.filter(liked=False).count()
+
+    def get_likestatus(self, obj):
+        user = self.context["request"].user
+        if obj.commentuserlike_set.filter(user=user).count() == 0:
+            return -1
+        else:
+            if obj.commentuserlike_set.filter(user=user).first().liked:
+                return 1
+            else:
+                return 0
