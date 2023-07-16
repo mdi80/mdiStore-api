@@ -247,7 +247,7 @@ class AddActToCommnet(APIView):
                     comAct.delete()
                 else:
                     comAct.liked = mstatus == 1
-                comAct.save()
+                    comAct.save()
             return Response(status=status.HTTP_202_ACCEPTED)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
