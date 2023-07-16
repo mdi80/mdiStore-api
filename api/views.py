@@ -247,6 +247,7 @@ class AddActToCommnet(APIView):
                     comAct.delete()
                 else:
                     comAct.liked = mstatus == 1
+                comAct.save()
             return Response(status=status.HTTP_202_ACCEPTED)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -453,7 +454,7 @@ class GetOwnRate(APIView):
             rate = -1
             if Rating.objects.filter(product=product, user=user).exists():
                 rate = Rating.objects.filter(product=product, user=user).first().rate
-            
+
             data = {"rate": rate}
             return Response(data)
         except Exception as e:
