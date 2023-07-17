@@ -104,6 +104,7 @@ class CommentSerilizer(serializers.ModelSerializer):
     likes = serializers.SerializerMethodField()
     dislikes = serializers.SerializerMethodField()
     likestatus = serializers.SerializerMethodField()
+    buyer = serializers.SerializerMethodField()
 
     class Meta:
         model = CommentProduct
@@ -117,6 +118,7 @@ class CommentSerilizer(serializers.ModelSerializer):
             "likes",
             "dislikes",
             "likestatus",
+            "buyer",
         ]
 
     def get_likes(self, obj):
@@ -134,3 +136,9 @@ class CommentSerilizer(serializers.ModelSerializer):
                 return 1
             else:
                 return 0
+
+    def get_buyer(self, obj):
+        user = obj.user
+        product = obj.product
+
+        return SaleProduct.objects.filter(user=user, product=product).exists()
