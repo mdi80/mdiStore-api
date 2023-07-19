@@ -97,6 +97,7 @@ class GetHome(APIView):
             content = HomeContentSerilizer(query, many=True).data
             fetchedItems = []
             mRequest = request._request
+
             for item in content:
                 data = None
                 title = item["title"]
@@ -114,8 +115,8 @@ class GetHome(APIView):
                     q = ViewProduct.objects.filter(user=user).order_by("-visited")
                     serializedData = ViewProductSerilizer(q, many=True).data
                     productData = []
-                    for item in serializedData:
-                        productData.append(item["productobj"])
+                    for i in serializedData:
+                        productData.append(i["productobj"])
                     data = {"data": productData, "length": len(productData)}
                 elif item["api_name"] == "suggestedCategory":
                     categoryId = getSuggestedCategory(
@@ -128,7 +129,6 @@ class GetHome(APIView):
                     }
                     title = Category.objects.get(id=categoryId).title
                     data = GetProductsWithParam.as_view()(mRequest).data
-
                 fetchedItems.append(
                     {
                         "contentType": item["contentType"],
@@ -138,8 +138,8 @@ class GetHome(APIView):
                     }
                 )
             return Response(fetchedItems)
-        except:
-            return Response("Unknown Error!", status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetProduct(generics.RetrieveAPIView):
@@ -183,7 +183,6 @@ class GetProductsWithParam(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        print(self.request)
         if "amazing" in self.request.GET:
             queryset = queryset.filter(isAmazing=True)
         if "categoryId" in self.request.GET:
