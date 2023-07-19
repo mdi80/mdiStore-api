@@ -113,7 +113,10 @@ class GetHome(APIView):
                 elif item["api_name"] == "getrecent":
                     q = ViewProduct.objects.filter(user=user).order_by("-visited")
                     serializedData = ViewProductSerilizer(q, many=True).data
-                    data = {"data": serializedData, "length": len(serializedData)}
+                    productData = []
+                    for item in serializedData:
+                        productData.append(item["productobj"])
+                    data = {"data": productData, "length": len(productData)}
                 elif item["api_name"] == "suggestedCategory":
                     categoryId = getSuggestedCategory(
                         item["params"]["index"] - 1, user.id
