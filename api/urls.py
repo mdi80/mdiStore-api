@@ -23,4 +23,6 @@ urlpatterns = [
     path("rate-product/", AddRate.as_view(), name="rateProduct"),
     path("get-own-rate/", GetOwnRate.as_view(), name="getOwnRate"),
     path("get-header/", GetHeader.as_view(), name="getheader"),
+    path("search/", Search.as_view(), name="search"),
+    path("search-hist/", GetHistSearch.as_view(), name="getsearchhist"),
 ]

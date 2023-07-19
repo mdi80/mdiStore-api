@@ -143,4 +143,4 @@ class CartHistory(models.Model):
 class SearchProduct(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     text = models.CharField(max_length=100)
-    created = models.DateField(auto_now_add=True)
+    searched = models.DateTimeField(auto_now_add=True)

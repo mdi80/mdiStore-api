@@ -206,3 +206,27 @@ class ProductSerilizer2(serializers.ModelSerializer):
 
     def get_sales(self, obj):
         return obj.saleproduct_set.count()
+
+
+class ProductSerilizer3(serializers.ModelSerializer):
+    views = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "title",
+            "views",
+            "category_name",
+        ]
+
+    def get_views(self, obj):
+        return obj.viewproduct_set.count()
+
+
+class SearchHistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SearchProduct
+        fields = [
+            "text",
+        ]

@@ -183,6 +183,22 @@ class GetProductsWithParam(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+        if "q" in self.request.GET:
+            if SearchProduct.objects.filter(
+                text=self.request.GET["q"], user=user
+            ).exists():
+                search = SearchProduct.objects.filter(
+                    text=self.request.GET["q"], user=user
+                ).first()
+                search.searched = datetime.datetime.now()
+                search.save()
+            else:
+                search = SearchProduct(text=self.request.GET["q"], user=user)
+                search.save()
+
+            queryset = Product.objects.filter(title__icontains=self.request.GET["q"])
+
         if "amazing" in self.request.GET:
             queryset = queryset.filter(isAmazing=True)
         if "categoryId" in self.request.GET:
@@ -540,7 +556,7 @@ class AddRate(APIView):
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
-class GetOwnRate(APIView):
+class GetOwnRate(generics.ListAPIView):
     authentication_classes = [
         TokenAuthentication,
     ]
@@ -561,5 +577,48 @@ class GetOwnRate(APIView):
 
             data = {"rate": rate}
             return Response(data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class Search(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = Product.objects.all()
+    serializer_class = ProductSerilizer3
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        try:
+            q = self.request.GET["q"]
+            queryset = queryset.filter(title__icontains=q)
+
+            return queryset
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetHistSearch(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = SearchProduct.objects.all()
+    serializer_class = SearchHistSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        try:
+            user = self.request.user
+            queryset = queryset.filter(user=user).order_by("-searched")[:20]
+            return queryset
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
