@@ -9,6 +9,28 @@ from django.core.exceptions import ValidationError
 # Create your models here.
 
 
+class HomeContent(models.Model):
+    contnetTypeChoice = (
+        ("HeaderComponent", "Image Header"),
+        ("CategoryCom", "Category"),
+        ("ScrollableRowList", "Scrollable Content"),
+        ("GridProductView", "Grid Poduct"),
+        ("SimpleRowComp", "Simple Row Content"),
+    )
+
+    contentType = models.CharField(max_length=100, choices=contnetTypeChoice)
+    title = models.CharField(max_length=50)
+    subtitle = models.CharField(max_length=50, blank=True)
+    api_name = models.CharField(max_length=200)
+    params = models.JSONField(blank=True, null=True)
+    order = models.IntegerField(unique=True)
+
+
+class Header(models.Model):
+    image = models.ImageField(upload_to="header_images/")
+    link = models.CharField(max_length=200)
+
+
 class ImageProduct(models.Model):
     image = models.ImageField(upload_to="product_image/")
 
@@ -29,6 +51,8 @@ class Product(models.Model):
     isAmazing = models.BooleanField(default=False)
     image = models.ManyToManyField(ImageProduct)
     active = models.BooleanField(default=True)
+    recDays = models.IntegerField(default=7)
+    added = models.DateField(auto_now_add=True)
 
     @property
     def category_name(self):
@@ -91,6 +115,7 @@ class Rating(models.Model):
 class ViewProduct(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    visited = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ("user", "product")

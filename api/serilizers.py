@@ -7,6 +7,18 @@ from .utils import get_color_name
 User = get_user_model()
 
 
+class HomeContentSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeContent
+        fields = ["order", "contentType", "params", "api_name", "title", "subtitle"]
+
+
+class HeaderSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = Header
+        fields = ["image", "link"]
+
+
 class ImageProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageProduct
@@ -39,6 +51,7 @@ class ProductSerilizer(serializers.ModelSerializer):
     color_names = serializers.SerializerMethodField()
     color_values = serializers.SerializerMethodField()
     fav = serializers.SerializerMethodField()
+    discount_precent = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -59,6 +72,9 @@ class ProductSerilizer(serializers.ModelSerializer):
             "image",
             "color_names",
             "color_values",
+            "discount_precent",
+            "recDays",
+            "added",
         ]
 
     def get_rating(self, obj):
@@ -92,6 +108,9 @@ class ProductSerilizer(serializers.ModelSerializer):
 
     def get_color_values(self, obj):
         return obj.productcolors_set.values_list("color", flat=True)
+
+    def get_discount_precent(self, obj):
+        return (obj.discount / obj.price) * 100
 
 
 class CategorySerilizer(serializers.ModelSerializer):
@@ -142,3 +161,41 @@ class CommentSerilizer(serializers.ModelSerializer):
         product = obj.product
 
         return SaleProduct.objects.filter(user=user, product=product).exists()
+
+
+class ViewProductSerilizer(serializers.ModelSerializer):
+    productobj = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ViewProduct
+        fields = ["product", "user", "visited", "productobj"]
+
+    def get_productobj(self, obj):
+        return ProductSerilizer2(obj.product).data
+
+
+class ProductSerilizer2(serializers.ModelSerializer):
+    image = ImageProductSerializer(many=True, read_only=True)
+    sales = serializers.SerializerMethodField()
+    views = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id",
+            "title",
+            "productCategory",
+            "price",
+            "discount",
+            "isAmazing",
+            "sales",
+            "views",
+            "category_name",
+            "image",
+        ]
+
+    def get_views(self, obj):
+        return obj.viewproduct_set.count()
+
+    def get_sales(self, obj):
+        return obj.saleproduct_set.count()

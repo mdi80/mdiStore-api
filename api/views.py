@@ -1,11 +1,15 @@
 import json
-from django.shortcuts import render
+from django.shortcuts import render, reverse
 from django.contrib.auth import get_user_model, authenticate, login
 from django.db import IntegrityError, ProgrammingError
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpRequest, JsonResponse
+from django.db.models import F
+
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
@@ -58,6 +62,82 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({"token": token.key})
 
 
+def getSuggestedCategory(index, user):
+    vp = ViewProduct.objects.filter(user=user).select_related("product")
+    vpd = ViewProductSerilizer(vp, many=True).data
+    categories = dict()
+    for item in vpd:
+        if item["productobj"]["productCategory"] in categories:
+            categories[item["productobj"]["productCategory"]] += 1
+        else:
+            categories[item["productobj"]["productCategory"]] = 1
+
+    orderedCat = []
+    for k in categories.keys():
+        orderedCat.append({"id": k, "count": categories[k]})
+    orderedCat = sorted(orderedCat, key=lambda row: row["count"], reverse=True)
+    if index < len(orderedCat):
+        return orderedCat[index]
+    else:
+        return -1
+
+
+class GetHome(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+            query = HomeContent.objects.all().order_by("order")
+            content = HomeContentSerilizer(query, many=True).data
+            fetchedItems = []
+            mRequest = request._request
+            for item in content:
+                data = None
+                title = item["title"]
+                subtitle = item["subtitle"]
+                if item["params"]:
+                    mRequest.GET = item["params"]
+
+                if item["api_name"] == "getproducts":
+                    data = GetProductsWithParam.as_view()(mRequest).data
+                elif item["api_name"] == "getcategory":
+                    data = GetCategories.as_view()(mRequest).data
+                elif item["api_name"] == "getheader":
+                    data = GetHeader.as_view()(mRequest).data
+                elif item["api_name"] == "getrecent":
+                    q = ViewProduct.objects.filter(user=user).order_by("-visited")
+                    data = ViewProductSerilizer(q, many=True).data
+                elif item["api_name"] == "suggestedCategory":
+                    categoryId = getSuggestedCategory(
+                        item["params"]["index"] - 1, user.id
+                    )["id"]
+                    mRequest.GET = {
+                        "categoryId": categoryId,
+                        "sort-mostView": True,
+                        "endIndex": item["params"]["endIndex"],
+                    }
+                    title = Category.objects.get(id=categoryId).title
+                    data = GetProductsWithParam.as_view()(mRequest).data
+
+                fetchedItems.append(
+                    {
+                        "contentType": item["contentType"],
+                        "title": title,
+                        "subtitle": subtitle,
+                        "data": data,
+                    }
+                )
+            return Response(fetchedItems)
+        except:
+            return Response("Unknown Error!", status=status.HTTP_400_BAD_REQUEST)
+
+
 class GetProduct(generics.RetrieveAPIView):
     authentication_classes = [
         TokenAuthentication,
@@ -99,6 +179,7 @@ class GetProductsWithParam(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        print(self.request)
         if "amazing" in self.request.GET:
             queryset = queryset.filter(isAmazing=True)
         if "categoryId" in self.request.GET:
@@ -111,6 +192,7 @@ class GetProductsWithParam(generics.ListAPIView):
             queryset = queryset.exclude(price__gt=float(self.request.GET["maxPrice"]))
         if "hasDiscount" in self.request.GET:
             queryset = queryset.exclude(discount=0)
+
         if "sort-mostExpensive" in self.request.GET:
             queryset = queryset.order_by("-price")
         if "sort-lessExpensive" in self.request.GET:
@@ -136,7 +218,10 @@ class GetProductsWithParam(generics.ListAPIView):
 
         returnedData = dict()
         returnedData["lenght"] = len(serialized_data)
-
+        if "sort-mostDiscount" in self.request.GET:
+            serialized_data = sorted(
+                serialized_data, key=lambda row: row["discount_precent"], reverse=True
+            )
         if "sort-mostSale" in self.request.GET:
             serialized_data = sorted(
                 serialized_data, key=lambda row: row["sales"], reverse=True
@@ -168,6 +253,22 @@ class GetCategories(generics.ListAPIView):
 
     queryset = Category.objects.all()
     serializer_class = CategorySerilizer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset
+
+
+class GetHeader(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = Header.objects.all()
+    serializer_class = HeaderSerilizer
 
     def get_queryset(self):
         queryset = super().get_queryset()
