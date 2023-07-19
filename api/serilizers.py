@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import *
 from django.db.models import Avg
 from .utils import get_color_name
+from mdistore.settings import HOST_NAME
 
 User = get_user_model()
 
@@ -20,9 +21,15 @@ class HeaderSerilizer(serializers.ModelSerializer):
 
 
 class ImageProductSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = ImageProduct
-        fields = ["image"]
+        fields = ["image", "image_url"]
+
+    def get_image_url(self, obj):
+        image_url = obj.image.url
+        return HOST_NAME + image_url
 
 
 class UserSerilizer(serializers.ModelSerializer):

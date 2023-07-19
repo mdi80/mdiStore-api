@@ -133,3 +133,5 @@ ALLOWED_HOSTS = ["mdi80nz.pythonanywhere.com", "localhost"]
 
 MEDIA_URL = "/"
 MEDIA_ROOT = "./"
+
+HOST_NAME = "http://mdi80nz.pythonanywhere.com"
