@@ -129,7 +129,7 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-ALLOWED_HOSTS = ["mdi80nz.pythonanywhere.com", "localhost"]
+ALLOWED_HOSTS = ["mdi80nz.pythonanywhere.com", "localhost", "10.0.2.2"]
 
 MEDIA_URL = "/"
 MEDIA_ROOT = "./"

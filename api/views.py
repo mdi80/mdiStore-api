@@ -622,3 +622,20 @@ class GetHistSearch(generics.ListAPIView):
             return queryset
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetColors(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        colors = ProductColors.objects.values_list("color", flat=True).distinct()
+        data = []
+        print(list(colors))
+        for color in colors:
+            data.append({"color_value": color, "color_name": get_color_name(color)})
+        return Response(data)
