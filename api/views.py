@@ -17,6 +17,7 @@ from rest_framework import viewsets, generics, status
 
 from .models import *
 from .serilizers import *
+from .utils import calculate_post_price, calculate_total_price
 
 User = get_user_model()
 
@@ -639,3 +640,121 @@ class GetColors(APIView):
         for color in colors:
             data.append({"color_value": color, "color_name": get_color_name(color)})
         return Response(data)
+
+
+class AddToCart(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+            productId = int(request.GET["productId"])
+            product = Product.objects.get(id=productId)
+            count = int(request.GET["count"])
+
+            cart = CurrentCartUser.objects.get_or_create(user=user)[0]
+            if ProductCart.objects.filter(cart=cart, product=product).exists():
+                print("here1")
+                cart_item = ProductCart.objects.filter(
+                    cart=cart, product=product
+                ).first()
+                cart_item.count = count
+                cart_item.save()
+
+            else:
+                print("here2")
+                cart_item = ProductCart(cart=cart, product=product, count=count)
+                cart_item.save()
+
+            return Response(data=CurrentCartSerializer(cart).data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetCurrentCart(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+
+            cart = CurrentCartUser.objects.filter(user=user).first()
+
+            return Response(CurrentCartSerializer(cart).data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class CloseCart(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+            address = request.GET["address"]
+            postal_code = int(request.GET["postal_code"])
+            phone = request.GET["phone"]
+
+            if not CurrentCartUser.objects.filter(user=user).exists():
+                return Response("Cart does not exists!")
+
+            cart = CurrentCartUser.objects.filter(user=user).first()
+            pCart = InProgressCart(user=user)
+            pCart.address = address
+            pCart.postal_code = postal_code
+            pCart.post_price = calculate_post_price(cart)
+            pCart.phone = phone
+            pCart.totalPrice = calculate_total_price(cart)
+
+            pCart.save()
+
+            product_carts = cart.productcart_set.all()
+
+            for pr in product_carts:
+                cart_item = ProductInProgressCart(
+                    cart=pCart,
+                    product=pr.product,
+                    count=pr.count,
+                    unitPrice=pr.product.price,
+                )
+                cart_item.save()
+
+            cart.delete()
+            return Response(InProgressCartSerializer(pCart).data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetInProgressCart(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+
+            cart = InProgressCart.objects.filter(user=user)
+
+            return Response(InProgressCartSerializer(cart, many=True).data)
+
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)

@@ -230,3 +230,49 @@ class SearchHistSerializer(serializers.ModelSerializer):
         fields = [
             "text",
         ]
+
+
+class ProductCartSerializer(serializers.ModelSerializer):
+    product = ProductSerilizer2()
+
+    class Meta:
+        model = ProductCart
+        fields = ["product", "count"]
+
+
+class CurrentCartSerializer(serializers.ModelSerializer):
+    items = ProductCartSerializer(source="productcart_set", many=True)
+
+    class Meta:
+        model = CurrentCartUser
+        fields = ["user", "items"]
+
+
+class InProgressCartProductSerializer(serializers.ModelSerializer):
+    product = ProductSerilizer2()
+
+    class Meta:
+        model = ProductInProgressCart
+        fields = ["product", "count", "unitPrice"]
+
+
+class InProgressCartSerializer(serializers.ModelSerializer):
+    items = InProgressCartProductSerializer(
+        source="productinprogresscart_set", many=True
+    )
+
+    class Meta:
+        model = InProgressCart
+        fields = [
+            "recorded_date",
+            "items",
+            "address",
+            "postal_code",
+            "phone",
+            "post_price",
+            "totalPrice",
+            "send",
+            "send_date",
+            "purchase_ref",
+            "recived_date",
+        ]

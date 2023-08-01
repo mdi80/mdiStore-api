@@ -26,4 +26,8 @@ urlpatterns = [
     path("get-colors/", GetColors.as_view(), name="getcolors"),
     path("search/", Search.as_view(), name="search"),
     path("search-hist/", GetHistSearch.as_view(), name="getsearchhist"),
+    path("add-to-cart/", AddToCart.as_view(), name="addtocart"),
+    path("get-cart/", GetCurrentCart.as_view(), name="getcurrentcart"),
+    path("get-inprogress-cart/", GetInProgressCart.as_view(), name="getinprogresscart"),
+    path("close-current-cart/", CloseCart.as_view(), name="closecurrentcart"),
 ]

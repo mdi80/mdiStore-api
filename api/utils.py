@@ -22,3 +22,12 @@ def get_color_name(hex):
 
     except ValueError:
         return convert_rgb_to_names(webcolors.hex_to_rgb(hex))
+
+
+def calculate_post_price(cart):
+    # TODO Should calculate base on products
+    return 2
+
+
+def calculate_total_price(cart):
+    return 100
