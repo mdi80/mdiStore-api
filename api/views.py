@@ -641,6 +641,30 @@ class GetColors(APIView):
             data.append({"color_value": color, "color_name": get_color_name(color)})
         return Response(data)
 
+class RemoveFromCart(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+            productId = int(request.GET["productId"])
+            product = Product.objects.get(id=productId)
+            cart = CurrentCartUser.objects.get_or_create(user=user)[0]
+
+            if ProductCart.objects.filter(cart=cart, product=product).exists():
+                ProductCart.objects.filter(
+                    cart=cart, product=product
+                ).first().delete()
+
+            return Response(data=CurrentCartSerializer(cart).data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
 
 class AddToCart(APIView):
     authentication_classes = [
