@@ -783,3 +783,4 @@ class GetInProgressCart(APIView):
 
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+

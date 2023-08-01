@@ -59,6 +59,7 @@ class ProductSerilizer(serializers.ModelSerializer):
     color_values = serializers.SerializerMethodField()
     fav = serializers.SerializerMethodField()
     discount_precent = serializers.SerializerMethodField()
+    cart_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -82,6 +83,7 @@ class ProductSerilizer(serializers.ModelSerializer):
             "discount_precent",
             "recDays",
             "added",
+            "cart_count",
         ]
 
     def get_rating(self, obj):
@@ -118,6 +120,16 @@ class ProductSerilizer(serializers.ModelSerializer):
 
     def get_discount_precent(self, obj):
         return (obj.discount / obj.price) * 100
+
+    def get_cart_count(self, obj):
+        cart = CurrentCartUser.objects.filter(user=self.context["request"].user)
+        if not cart.exists():
+            return 0
+        cart_item = ProductCart.objects.filter(cart=cart.first(), product=obj)
+        if not cart_item.exists():
+            return 0
+
+        return cart_item.first().count
 
 
 class CategorySerilizer(serializers.ModelSerializer):
@@ -253,7 +265,7 @@ class InProgressCartProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductInProgressCart
-        fields = ["product", "count", "unitPrice","discount"]
+        fields = ["product", "count", "unitPrice", "discount"]
 
 
 class InProgressCartSerializer(serializers.ModelSerializer):
