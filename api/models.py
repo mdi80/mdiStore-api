@@ -158,6 +158,7 @@ class ProductInProgressCart(models.Model):
     cart = models.ForeignKey(InProgressCart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     unitPrice = models.PositiveIntegerField()
+    discount = models.IntegerField(default=0)
     count = models.PositiveIntegerField(default=1)
 
 

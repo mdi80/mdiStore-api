@@ -24,10 +24,30 @@ def get_color_name(hex):
         return convert_rgb_to_names(webcolors.hex_to_rgb(hex))
 
 
-def calculate_post_price(cart):
-    # TODO Should calculate base on products
-    return 2
+def calculate_post_price(products_cart):
+    total_weight = 0
+
+    for pr in products_cart:
+        weight = pr.product.price / 100  # TODO add weight to product
+        total_weight += weight
+
+    if weight < 2:
+        return 2
+    if weight < 10:
+        return 5
+    if weight < 50:
+        return 10
+
+    return 20
 
 
-def calculate_total_price(cart):
-    return 100
+def calculate_total_price(products_cart):
+    total_price = 0
+
+    for pr in products_cart:
+        price = pr.product.price
+        discount = pr.product.discount
+        count = pr.count
+        total_price += count * (price - discount)
+
+    return total_price

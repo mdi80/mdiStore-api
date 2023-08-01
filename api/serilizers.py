@@ -253,7 +253,7 @@ class InProgressCartProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductInProgressCart
-        fields = ["product", "count", "unitPrice"]
+        fields = ["product", "count", "unitPrice","discount"]
 
 
 class InProgressCartSerializer(serializers.ModelSerializer):

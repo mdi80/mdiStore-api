@@ -717,9 +717,9 @@ class CloseCart(APIView):
             pCart = InProgressCart(user=user)
             pCart.address = address
             pCart.postal_code = postal_code
-            pCart.post_price = calculate_post_price(cart)
+            pCart.post_price = calculate_post_price(cart.productcart_set.all())
             pCart.phone = phone
-            pCart.totalPrice = calculate_total_price(cart)
+            pCart.totalPrice = calculate_total_price(cart.productcart_set.all())
 
             pCart.save()
 
@@ -730,6 +730,7 @@ class CloseCart(APIView):
                     cart=pCart,
                     product=pr.product,
                     count=pr.count,
+                    discount=pr.product.discount,
                     unitPrice=pr.product.price,
                 )
                 cart_item.save()
