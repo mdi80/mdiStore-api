@@ -641,6 +641,7 @@ class GetColors(APIView):
             data.append({"color_value": color, "color_name": get_color_name(color)})
         return Response(data)
 
+
 class RemoveFromCart(APIView):
     authentication_classes = [
         TokenAuthentication,
@@ -657,9 +658,7 @@ class RemoveFromCart(APIView):
             cart = CurrentCartUser.objects.get_or_create(user=user)[0]
 
             if ProductCart.objects.filter(cart=cart, product=product).exists():
-                ProductCart.objects.filter(
-                    cart=cart, product=product
-                ).first().delete()
+                ProductCart.objects.filter(cart=cart, product=product).first().delete()
 
             return Response(data=CurrentCartSerializer(cart).data)
         except Exception as e:
@@ -682,18 +681,21 @@ class AddToCart(APIView):
             count = int(request.GET["count"])
 
             cart = CurrentCartUser.objects.get_or_create(user=user)[0]
+
             if ProductCart.objects.filter(cart=cart, product=product).exists():
-                print("here1")
                 cart_item = ProductCart.objects.filter(
                     cart=cart, product=product
                 ).first()
-                cart_item.count = count
-                cart_item.save()
+                if count == 0:
+                    cart_item.delete()
+                else:
+                    cart_item.count = count
+                    cart_item.save()
 
             else:
-                print("here2")
-                cart_item = ProductCart(cart=cart, product=product, count=count)
-                cart_item.save()
+                if not count==0:
+                    cart_item = ProductCart(cart=cart, product=product, count=count)
+                    cart_item.save()
 
             return Response(data=CurrentCartSerializer(cart).data)
         except Exception as e:
@@ -783,4 +785,3 @@ class GetInProgressCart(APIView):
 
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
-

@@ -211,6 +211,7 @@ class ProductSerilizer2(serializers.ModelSerializer):
             "views",
             "category_name",
             "image",
+            "recDays",
         ]
 
     def get_views(self, obj):
