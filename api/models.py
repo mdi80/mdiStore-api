@@ -140,7 +140,7 @@ class ProductCart(models.Model):
 
 
 class AddressUser(models.Model):
-    user = models.ForeignKey(get_user_model(),on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     address = models.CharField(max_length=1000)
     postal_code = models.BigIntegerField()
     phone = models.CharField(max_length=12)
@@ -157,7 +157,7 @@ class InProgressCart(models.Model):
     totalPrice = models.DecimalField(max_digits=10, decimal_places=2)
     send = models.BooleanField(default=False)
     send_date = models.DateField(null=True, blank=True)
-    purchase_ref = models.PositiveBigIntegerField(blank=True, null=True)
+    paid = models.BooleanField(default=False)
     recived_date = models.DateField(null=True, blank=True)
 
 
@@ -168,6 +168,13 @@ class ProductInProgressCart(models.Model):
     discount = models.IntegerField(default=0)
     count = models.PositiveIntegerField(default=1)
 
+class PurcheseRefCart(models.Model):
+    ipcart = models.ForeignKey(
+        InProgressCart, on_delete=models.PROTECT, related_name="purchese_ref"
+    )
+    amount = models.BigIntegerField()
+    purcheseId = models.BigIntegerField()
+    purcheseDate = models.DateTimeField(auto_now_add=True)
 
 class SearchProduct(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
