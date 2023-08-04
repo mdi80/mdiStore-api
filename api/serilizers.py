@@ -289,3 +289,18 @@ class InProgressCartSerializer(serializers.ModelSerializer):
             "purchase_ref",
             "recived_date",
         ]
+
+
+class AddressUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AddressUser
+        fields = [
+            "id",
+            "address",
+            "postal_code",
+            "phone",
+            "state",
+            "city",
+        ]
+

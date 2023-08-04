@@ -31,4 +31,7 @@ urlpatterns = [
     path("get-inprogress-cart/", GetInProgressCart.as_view(), name="getinprogresscart"),
     path("close-current-cart/", CloseCart.as_view(), name="closecurrentcart"),
     path("remove-from-cart/", RemoveFromCart.as_view(), name="removefromcart"),
+    path("get-address/", GetAdresses.as_view(), name="getaddresses"),
+    path("add-address/", AddAdress.as_view(), name="addaddress"),
+    path("get-post-price/", GetPostPice.as_view(), name="getpostprice"),
 ]

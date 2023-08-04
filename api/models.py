@@ -139,13 +139,20 @@ class ProductCart(models.Model):
     count = models.PositiveIntegerField(default=1)
 
 
+class AddressUser(models.Model):
+    user = models.ForeignKey(get_user_model(),on_delete=models.CASCADE)
+    address = models.CharField(max_length=1000)
+    postal_code = models.BigIntegerField()
+    phone = models.CharField(max_length=12)
+    state = models.CharField(max_length=50)
+    city = models.CharField(max_length=50)
+
+
 class InProgressCart(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through="ProductInProgressCart")
     recorded_date = models.DateTimeField(auto_now_add=True)
-    address = models.CharField(max_length=1000)
-    postal_code = models.BigIntegerField()
-    phone = models.CharField(max_length=12)
+    address = models.ForeignKey(AddressUser, on_delete=models.PROTECT)
     post_price = models.IntegerField()
     totalPrice = models.DecimalField(max_digits=10, decimal_places=2)
     send = models.BooleanField(default=False)

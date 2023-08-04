@@ -693,7 +693,7 @@ class AddToCart(APIView):
                     cart_item.save()
 
             else:
-                if not count==0:
+                if not count == 0:
                     cart_item = ProductCart(cart=cart, product=product, count=count)
                     cart_item.save()
 
@@ -721,7 +721,7 @@ class GetCurrentCart(APIView):
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
-class CloseCart(APIView):
+class AddAdress(APIView):
     authentication_classes = [
         TokenAuthentication,
     ]
@@ -735,17 +735,92 @@ class CloseCart(APIView):
             address = request.GET["address"]
             postal_code = int(request.GET["postal_code"])
             phone = request.GET["phone"]
+            state = request.GET["state"]
+            city = request.GET["city"]
+
+            addressModel = AddressUser(user=user)
+            addressModel.address = address
+            addressModel.phone = phone
+            addressModel.postal_code = postal_code
+            addressModel.state = state
+            addressModel.city = city
+            addressModel.save()
+            allAddress = AddressUser.objects.filter(user=user)
+            return Response(AddressUserSerializer(allAddress, many=True).data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetAdresses(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = AddressUser.objects.all()
+    serializer_class = AddressUserSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        queryset = queryset.filter(user=user)
+        return queryset
+
+
+class GetPostPice(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+            addressId = request.GET["addressId"]
+
+            address = AddressUser.objects.get(id=addressId)
+            cart = CurrentCartUser.objects.get(user=user)
+
+            postPrice = calculate_post_price(
+                cart.productcart_set.all(), address.state, address.city
+            )
+            totalPrice = calculate_total_price(cart.productcart_set.all()) + postPrice
+
+            return Response({"postPrice": postPrice, "totalPrice": totalPrice})
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class CloseCart(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+            addressId = int(request.GET["addressId"])
 
             if not CurrentCartUser.objects.filter(user=user).exists():
                 return Response("Cart does not exists!")
 
+            address = AddressUser.objects.get(id=addressId)
+
             cart = CurrentCartUser.objects.filter(user=user).first()
             pCart = InProgressCart(user=user)
             pCart.address = address
-            pCart.postal_code = postal_code
-            pCart.post_price = calculate_post_price(cart.productcart_set.all())
-            pCart.phone = phone
-            pCart.totalPrice = calculate_total_price(cart.productcart_set.all())
+            postPrice = calculate_post_price(cart.productcart_set.all())
+            pCart.post_price = postPrice
+            pCart.totalPrice = (
+                calculate_total_price(cart.productcart_set.all()) + postPrice
+            )
 
             pCart.save()
 
