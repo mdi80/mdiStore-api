@@ -24,7 +24,7 @@ def get_color_name(hex):
         return convert_rgb_to_names(webcolors.hex_to_rgb(hex))
 
 
-def calculate_post_price(products_cart, state, city):
+def calculate_post_price(products_cart, state="", city=""):
     total_weight = 0
 
     for pr in products_cart:

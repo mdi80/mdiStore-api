@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "api",
+    "pay",
 ]
 
 MIDDLEWARE = [
@@ -129,9 +130,12 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-ALLOWED_HOSTS = ["mdi80nz.pythonanywhere.com", "localhost", "10.0.2.2"]
+ALLOWED_HOSTS = ["*"]
 
 MEDIA_URL = "/"
 MEDIA_ROOT = "./"
 
 HOST_NAME = "http://mdi80nz.pythonanywhere.com"
+MERCHANT = "fcbccee1-00a5-4c05-9038-e49e8d2fafbe"
+
+SANDBOX = True

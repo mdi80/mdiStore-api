@@ -745,7 +745,7 @@ class AddAdress(APIView):
             addressModel.state = state
             addressModel.city = city
             addressModel.save()
-            allAddress = AddressUser.objects.filter(user=user)
+            allAddress = reversed(AddressUser.objects.filter(user=user))
             return Response(AddressUserSerializer(allAddress, many=True).data)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
@@ -765,7 +765,8 @@ class GetAdresses(generics.ListAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
-        queryset = queryset.filter(user=user)
+        queryset = reversed(queryset.filter(user=user))
+
         return queryset
 
 
@@ -812,7 +813,6 @@ class CloseCart(APIView):
                 return Response("Cart does not exists!")
 
             address = AddressUser.objects.get(id=addressId)
-
             cart = CurrentCartUser.objects.filter(user=user).first()
             pCart = InProgressCart(user=user)
             pCart.address = address
