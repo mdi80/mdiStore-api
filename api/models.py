@@ -150,23 +150,43 @@ class AddressUser(models.Model):
 
 class InProgressCart(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, through="ProductInProgressCart")
+    products = models.ManyToManyField(Product, through="IPProductCart")
     recorded_date = models.DateTimeField(auto_now_add=True)
     address = models.ForeignKey(AddressUser, on_delete=models.PROTECT)
-    post_price = models.IntegerField()
-    totalPrice = models.DecimalField(max_digits=10, decimal_places=2)
+    # post_price = models.IntegerField()
+    # totalPrice = models.DecimalField(max_digits=10, decimal_places=2)
+    # send = models.BooleanField(default=False)
+    # send_date = models.DateField(null=True, blank=True)
+    # paid = models.BooleanField(default=False)
+
+
+class IPProductCart(models.Model):
+    cart = models.ForeignKey(InProgressCart, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    count = models.PositiveIntegerField(default=1)
+
+
+class PaidCart(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product, through="ProductPaidCart")
+    recorded_date = models.DateTimeField()
+    address = models.ForeignKey(AddressUser, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    ref_id = models.PositiveBigIntegerField()
+    authority = models.CharField(max_length=36)
+    paid_date = models.DateTimeField(auto_now_add=True)
     send = models.BooleanField(default=False)
     send_date = models.DateField(null=True, blank=True)
-    paid = models.BooleanField(default=False)
     recived_date = models.DateField(null=True, blank=True)
 
 
-class ProductInProgressCart(models.Model):
-    cart = models.ForeignKey(InProgressCart, on_delete=models.CASCADE)
+class ProductPaidCart(models.Model):
+    cart = models.ForeignKey(PaidCart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     unitPrice = models.PositiveIntegerField()
     discount = models.IntegerField(default=0)
     count = models.PositiveIntegerField(default=1)
+
 
 class PurcheseRefCart(models.Model):
     ipcart = models.ForeignKey(
@@ -175,6 +195,7 @@ class PurcheseRefCart(models.Model):
     amount = models.BigIntegerField()
     purcheseId = models.BigIntegerField()
     purcheseDate = models.DateTimeField(auto_now_add=True)
+
 
 class SearchProduct(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)

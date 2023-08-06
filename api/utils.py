@@ -26,11 +26,11 @@ def get_color_name(hex):
 
 def calculate_post_price(products_cart, state="", city=""):
     total_weight = 0
-
+    print(products_cart)
     for pr in products_cart:
         weight = pr.product.price / 100  # TODO add weight to product
         total_weight += weight
-
+    
     if weight < 2:
         return 2
     if weight < 10:

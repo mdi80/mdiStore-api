@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, reverse
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.conf import settings
-from api.models import InProgressCart
+from api.models import InProgressCart, PaidCart, ProductPaidCart
 import requests
 import json
 import random
@@ -19,14 +19,17 @@ CallbackURL = "http://localhost:8000/pay/verify/"
 
 
 def send_request(request):
-    cartId = int(request.GET["cartId"])
-    updateRes = requests.get(
-        settings.HOST_NAME + "api/update-cart/?cart=" + str(cartId)
+    cartId = int(request.GET["cart"])
+    # authoization = request.headers["Authoization"]
+    resprice = requests.get(
+        f"http://localhost:8000/api/get-ipcart-price/?cart={cartId}"
     )
-    if not updateRes.ok:
-        return HttpResponseBadRequest("Could not update your cart!")
+    if not resprice.ok:
+        return HttpResponseBadRequest("Unkowon error happend!")
+    price = resprice.json()
     cart = InProgressCart.objects.get(id=cartId)
-    amount = cart.totalPrice
+    amount = price["totalPrice"]
+
     data = {
         "merchant_id": settings.MERCHANT,
         "description": description,
@@ -51,15 +54,15 @@ def send_request(request):
         # return redirect("/failed")
 
         # get authority and save it in db
-        num = int(random.random() * 10000000000) + 100000000000
-        authority = "A0000000000000000000000" + str(num)
+        num = int(random.random() * 100000000000)
+        authority = "A00000000000000000000000" + str(num)
 
         try:
             cart = InProgressCart.objects.get(id=cartId)
-            aModel = models.AuthorityCart(authority=authority, cart=cart)
+            aModel = models.AuthorityCart(authority=authority, cart=cart, price=amount)
             aModel.save()
             return redirect(
-                "/pay/pay/?amount=" + amount + "&authority=" + authority
+                "/pay/pay/?amount=" + str(amount) + "&authority=" + authority
             )
         except Exception as e:
             return HttpResponseBadRequest(str(e))
@@ -74,23 +77,55 @@ def verify(request):
     authority = request.GET["Authority"]
 
     if status == "OK":
+        print(authority)
         aModel = models.AuthorityCart.objects.get(authority=authority)
         redirect_template = loader.get_template("redirect.html")
         data = {
             "MerchantID": settings.MERCHANT,
-            "amount": aModel.cart.totalPrice,
-            "authority": request.GET["Authority"],
+            "amount": aModel.price,
+            "authority": authority,
         }
         # Should verify data in api zarinpal
 
         # If ok to this
-        refid = 323425435532
+        refid = int(random.random() * 100000000)
         code = 100
-
         if code >= 100:
+            print("here2")
+
+            cart = aModel.cart
+            pCart = PaidCart(user=cart.user)
+            pCart.recorded_date = cart.recorded_date
+            pCart.address = cart.address
+            pCart.ref_id = refid
+            pCart.authority = authority
+            pCart.amount = aModel.price
+            pCart.save()
+            print("here3")
+
+            products = cart.ipproductcart_set.all()
+            productPaidCart = ProductPaidCart(
+                cart=pCart,
+            )
+            for pr in products:
+                productPaidCart.product = pr.product
+                productPaidCart.count = pr.count
+                productPaidCart.discount = pr.product.discount
+                productPaidCart.unitPrice = pr.product.price
+                productPaidCart.save()
+            cart.delete()
+            print("here4")
+
             # aModel.cart.
             return HttpResponse(
-                redirect_template.render({"status": "OK", "refId": refid, "code": code})
+                redirect_template.render(
+                    {
+                        "status": "OK",
+                        "refId": refid,
+                        "code": code,
+                        "paidcartId": pCart.id,
+                    }
+                )
             )
         else:
             return HttpResponse(
@@ -116,9 +151,10 @@ def verify(request):
 
 def payCartView(requst):
     pay_template = loader.get_template("pay.html")
-
+    print("sdaasd")
     context = {
         "data": {"amount": requst.GET["amount"], "authority": requst.GET["authority"]},
     }
+    print("dsadsa")
 
     return HttpResponse(pay_template.render(context, requst))

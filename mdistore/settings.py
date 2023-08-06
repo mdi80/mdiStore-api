@@ -135,7 +135,7 @@ ALLOWED_HOSTS = ["*"]
 MEDIA_URL = "/"
 MEDIA_ROOT = "./"
 
-HOST_NAME = "http://localhost:8000/"
+HOST_NAME = "http://10.0.2.2:8000"
 
 MERCHANT = "fcbccee1-00a5-4c05-9038-e49e8d2fafbe"
 

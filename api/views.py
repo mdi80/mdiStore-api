@@ -751,7 +751,7 @@ class AddAdress(APIView):
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
-class GetAdresses(generics.ListAPIView):
+class GetAllAddress(generics.ListAPIView):
     authentication_classes = [
         TokenAuthentication,
     ]
@@ -770,7 +770,7 @@ class GetAdresses(generics.ListAPIView):
         return queryset
 
 
-class GetPostPice(APIView):
+class GetCartPrice(APIView):
     authentication_classes = [
         TokenAuthentication,
     ]
@@ -808,34 +808,35 @@ class CloseCart(APIView):
         try:
             user = request.user
             addressId = int(request.GET["addressId"])
-
+            print("her")
             if not CurrentCartUser.objects.filter(user=user).exists():
-                return Response("Cart does not exists!")
+                return Response(
+                    "Cart does not exists!", status=status.HTTP_404_NOT_FOUND
+                )
 
             address = AddressUser.objects.get(id=addressId)
             cart = CurrentCartUser.objects.filter(user=user).first()
             pCart = InProgressCart(user=user)
             pCart.address = address
-            postPrice = calculate_post_price(cart.productcart_set.all())
-            pCart.post_price = postPrice
-            pCart.totalPrice = (
-                calculate_total_price(cart.productcart_set.all()) + postPrice
-            )
+            # postPrice = calculate_post_price(cart.productcart_set.all())
+            # pCart.post_price = postPrice
+            # pCart.totalPrice = (
+            #     calculate_total_price(cart.productcart_set.all()) + postPrice
+            # )
 
             pCart.save()
 
             product_carts = cart.productcart_set.all()
 
             for pr in product_carts:
-                cart_item = ProductInProgressCart(
+                cart_item = IPProductCart(
                     cart=pCart,
                     product=pr.product,
                     count=pr.count,
-                    discount=pr.product.discount,
-                    unitPrice=pr.product.price,
                 )
                 cart_item.save()
 
+            print("here")
             cart.delete()
             return Response(InProgressCartSerializer(pCart).data)
         except Exception as e:
@@ -862,7 +863,7 @@ class GetInProgressCart(APIView):
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
-class UpdateInProgressCart(APIView):
+class GetIPCartPrice(APIView):
     permission_classes = [
         AllowAny,
     ]
@@ -870,19 +871,26 @@ class UpdateInProgressCart(APIView):
     def get(self, request):
         try:
             IPCartId = request.GET["cart"]
+            print("eeeee")
             pCart = InProgressCart.objects.get(id=IPCartId)
-            products = pCart.productinprogresscart_set.all()
-            postPrice = calculate_post_price(products)
-            pCart.post_price = postPrice
-            pCart.totalPrice = calculate_total_price(products) + postPrice
+            products = pCart.ipproductcart_set.all()
+            postPrice = calculate_post_price(
+                products, pCart.address.state, pCart.address
+            )
+            totalPrice = calculate_total_price(products) + postPrice
+            data = {"postPrice": postPrice, "totalPrice": totalPrice}
+            return Response(data)
 
-            pCart.save()
+            # pCart.post_price = postPrice
+            # pCart.totalPrice = calculate_total_price(products) + postPrice
 
-            for pr in products:
-                pr.discount = pr.product.discount
-                pr.unitPrice = pr.product.price
-                pr.save()
+            # pCart.save()
 
-            return Response(status=status.HTTP_200_OK)
+            # for pr in products:
+            #     pr.discount = pr.product.discount
+            #     pr.unitPrice = pr.product.price
+            #     pr.save()
+
+            # return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
