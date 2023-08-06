@@ -269,30 +269,7 @@ class InProgressCartProductSerializer(serializers.ModelSerializer):
         fields = ["product", "count", "unitPrice", "discount"]
 
 
-class InProgressCartSerializer(serializers.ModelSerializer):
-    items = InProgressCartProductSerializer(
-        source="productinprogresscart_set", many=True
-    )
-
-    class Meta:
-        model = InProgressCart
-        fields = [
-            "recorded_date",
-            "items",
-            "address",
-            "postal_code",
-            "phone",
-            "post_price",
-            "totalPrice",
-            "send",
-            "send_date",
-            "purchase_ref",
-            "recived_date",
-        ]
-
-
 class AddressUserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = AddressUser
         fields = [
@@ -304,3 +281,23 @@ class AddressUserSerializer(serializers.ModelSerializer):
             "city",
         ]
 
+
+class InProgressCartSerializer(serializers.ModelSerializer):
+    items = InProgressCartProductSerializer(
+        source="productinprogresscart_set", many=True
+    )
+    address = AddressUserSerializer()
+
+    class Meta:
+        model = InProgressCart
+        fields = [
+            "id",
+            "recorded_date",
+            "items",
+            "address",
+            "post_price",
+            "totalPrice",
+            "send",
+            "send_date",
+            "recived_date",
+        ]

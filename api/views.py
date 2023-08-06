@@ -860,3 +860,29 @@ class GetInProgressCart(APIView):
 
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateInProgressCart(APIView):
+    permission_classes = [
+        AllowAny,
+    ]
+
+    def get(self, request):
+        try:
+            IPCartId = request.GET["cart"]
+            pCart = InProgressCart.objects.get(id=IPCartId)
+            products = pCart.productinprogresscart_set.all()
+            postPrice = calculate_post_price(products)
+            pCart.post_price = postPrice
+            pCart.totalPrice = calculate_total_price(products) + postPrice
+
+            pCart.save()
+
+            for pr in products:
+                pr.discount = pr.product.discount
+                pr.unitPrice = pr.product.price
+                pr.save()
+
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)

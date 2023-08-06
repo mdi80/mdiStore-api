@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect, reverse
 from django.template import loader
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.conf import settings
+from api.models import InProgressCart
 import requests
 import json
+import random
+from . import models
 
 
 ZP_API_REQUEST = f"https://api.zarinpal.com/pg/v4/payment/request.json"
@@ -16,11 +19,18 @@ CallbackURL = "http://localhost:8000/pay/verify/"
 
 
 def send_request(request):
+    cartId = int(request.GET["cartId"])
+    updateRes = requests.get(
+        settings.HOST_NAME + "api/update-cart/?cart=" + str(cartId)
+    )
+    if not updateRes.ok:
+        return HttpResponseBadRequest("Could not update your cart!")
+    cart = InProgressCart.objects.get(id=cartId)
+    amount = cart.totalPrice
     data = {
         "merchant_id": settings.MERCHANT,
-        "amount": request.GET["amount"],
         "description": description,
-        "phone": request.GET["phone"],
+        "amount": amount,
         "callback_url": CallbackURL,
     }
 
@@ -39,7 +49,20 @@ def send_request(request):
         #         return redirect("/failed")
 
         # return redirect("/failed")
-        return redirect("/pay/pay/?amount=" + request.GET["amount"])
+
+        # get authority and save it in db
+        num = int(random.random() * 10000000000) + 100000000000
+        authority = "A0000000000000000000000" + str(num)
+
+        try:
+            cart = InProgressCart.objects.get(id=cartId)
+            aModel = models.AuthorityCart(authority=authority, cart=cart)
+            aModel.save()
+            return redirect(
+                "/pay/pay/?amount=" + amount + "&authority=" + authority
+            )
+        except Exception as e:
+            return HttpResponseBadRequest(str(e))
     except requests.exceptions.Timeout:
         return redirect("/Timeout")
     except requests.exceptions.ConnectionError:
@@ -48,16 +71,31 @@ def send_request(request):
 
 def verify(request):
     status = request.GET["Status"]
-    if status == "OK":
-        redirect_template = loader.get_template("redirect.html")
-        refid = 323425435532
-        return HttpResponse(redirect_template.render({"status": "OK", "refId": refid}))
+    authority = request.GET["Authority"]
 
-        # data = {
-        #     "MerchantID": settings.MERCHANT,
-        #     "mount": 1000,
-        #     "authority": request.GET["Authority"],
-        # }
+    if status == "OK":
+        aModel = models.AuthorityCart.objects.get(authority=authority)
+        redirect_template = loader.get_template("redirect.html")
+        data = {
+            "MerchantID": settings.MERCHANT,
+            "amount": aModel.cart.totalPrice,
+            "authority": request.GET["Authority"],
+        }
+        # Should verify data in api zarinpal
+
+        # If ok to this
+        refid = 323425435532
+        code = 100
+
+        if code >= 100:
+            # aModel.cart.
+            return HttpResponse(
+                redirect_template.render({"status": "OK", "refId": refid, "code": code})
+            )
+        else:
+            return HttpResponse(
+                redirect_template.render({"status": "NOK", "code": code})
+            )
         # data = json.dumps(data)
         # # set content length by data
         # h2 = {"content-type": "application/json", "content-length": str(len(data))}
@@ -80,7 +118,7 @@ def payCartView(requst):
     pay_template = loader.get_template("pay.html")
 
     context = {
-        "data": {"amount": requst.GET["amount"], "name": "Man"},
+        "data": {"amount": requst.GET["amount"], "authority": requst.GET["authority"]},
     }
 
     return HttpResponse(pay_template.render(context, requst))

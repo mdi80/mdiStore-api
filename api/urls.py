@@ -34,4 +34,7 @@ urlpatterns = [
     path("get-address/", GetAdresses.as_view(), name="getaddresses"),
     path("add-address/", AddAdress.as_view(), name="addaddress"),
     path("get-post-price/", GetPostPice.as_view(), name="getpostprice"),
+    path("update-cart/", UpdateInProgressCart.as_view(), name="updateipcart"),
+
 ]
+
