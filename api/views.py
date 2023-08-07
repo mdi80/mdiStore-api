@@ -843,7 +843,7 @@ class CloseCart(APIView):
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
-class GetInProgressCart(APIView):
+class GetAllInProgressCart(APIView):
     authentication_classes = [
         TokenAuthentication,
     ]
@@ -894,3 +894,25 @@ class GetIPCartPrice(APIView):
             # return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+class GetIPCart(generics.RetrieveAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    queryset = InProgressCart.objects.all()
+    serializer_class = InProgressCartSerializer
+    lookup_field = "id"
+
+class GetPaidCart(generics.RetrieveAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    queryset = PaidCart.objects.all()
+    serializer_class = PaidCartSerializer
+    lookup_field = "id"

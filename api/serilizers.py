@@ -294,3 +294,32 @@ class InProgressCartSerializer(serializers.ModelSerializer):
             "items",
             "address",
         ]
+
+
+class ProductPaidCartSerializer(serializers.ModelSerializer):
+    product = ProductSerilizer2()
+
+    class Meta:
+        model = ProductPaidCart
+        fields = ["product", "count", "unitPrice", "discount"]
+
+
+class PaidCartSerializer(serializers.ModelSerializer):
+    items = ProductPaidCartSerializer(source="productpaidcart_set", many=True)
+    address = AddressUserSerializer()
+
+    class Meta:
+        model = PaidCart
+        fields = [
+            "id",
+            "recorded_date",
+            "amount",
+            "ref_id",
+            "authority",
+            "paid_date",
+            "send",
+            "send_date",
+            "recived_date",
+            "items",
+            "address",
+        ]

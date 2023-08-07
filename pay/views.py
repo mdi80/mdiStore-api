@@ -76,9 +76,8 @@ def verify(request):
     status = request.GET["Status"]
     authority = request.GET["Authority"]
 
+    aModel = models.AuthorityCart.objects.get(authority=authority)
     if status == "OK":
-        print(authority)
-        aModel = models.AuthorityCart.objects.get(authority=authority)
         redirect_template = loader.get_template("redirect.html")
         data = {
             "MerchantID": settings.MERCHANT,
@@ -91,8 +90,6 @@ def verify(request):
         refid = int(random.random() * 100000000)
         code = 100
         if code >= 100:
-            print("here2")
-
             cart = aModel.cart
             pCart = PaidCart(user=cart.user)
             pCart.recorded_date = cart.recorded_date
@@ -101,7 +98,6 @@ def verify(request):
             pCart.authority = authority
             pCart.amount = aModel.price
             pCart.save()
-            print("here3")
 
             products = cart.ipproductcart_set.all()
             productPaidCart = ProductPaidCart(
@@ -114,7 +110,6 @@ def verify(request):
                 productPaidCart.unitPrice = pr.product.price
                 productPaidCart.save()
             cart.delete()
-            print("here4")
 
             # aModel.cart.
             return HttpResponse(
@@ -123,13 +118,20 @@ def verify(request):
                         "status": "OK",
                         "refId": refid,
                         "code": code,
-                        "paidcartId": pCart.id,
+                        "cart": pCart.id,
                     }
                 )
             )
         else:
             return HttpResponse(
-                redirect_template.render({"status": "NOK", "code": code})
+                redirect_template.render(
+                    {
+                        "status": "NOK",
+                        "refId": 0,
+                        "code": code,
+                        "cart": aModel.cart.id,
+                    }
+                )
             )
         # data = json.dumps(data)
         # # set content length by data
@@ -146,7 +148,16 @@ def verify(request):
     else:
         redirect_template = loader.get_template("redirect.html")
         refid = 0
-        return HttpResponse(redirect_template.render({"status": "NOK", "refId": refid}))
+        return HttpResponse(
+            redirect_template.render(
+                {
+                    "status": "NOK",
+                    "refId": 0,
+                    "code": -5,
+                    "cart": aModel.cart.id,
+                }
+            )
+        )
 
 
 def payCartView(requst):
