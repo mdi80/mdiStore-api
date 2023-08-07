@@ -15,15 +15,14 @@ ZP_API_STARTPAY = f"https://www.zarinpal.com/pg/StartPay/"
 
 description = "پرداخت سبد خرید"
 
-CallbackURL = "http://localhost:8000/pay/verify/"
+
+CallbackURL = settings.HOST_NAME + "/pay/verify/"
 
 
 def send_request(request):
     cartId = int(request.GET["cart"])
     # authoization = request.headers["Authoization"]
-    resprice = requests.get(
-        f"http://localhost:8000/api/get-ipcart-price/?cart={cartId}"
-    )
+    resprice = requests.get(f"{settings.HOST_NAME}/api/get-ipcart-price/?cart={cartId}")
     if not resprice.ok:
         return HttpResponseBadRequest("Unkowon error happend!")
     price = resprice.json()
