@@ -4,8 +4,7 @@ from django.contrib.auth import get_user_model, authenticate, login
 from django.db import IntegrityError, ProgrammingError
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, JsonResponse
-from django.db.models import F
-
+from django.db.models import F, ProtectedError
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -737,8 +736,16 @@ class AddAdress(APIView):
             phone = request.GET["phone"]
             state = request.GET["state"]
             city = request.GET["city"]
-
-            addressModel = AddressUser(user=user)
+            if "id" in request.GET:
+                try:
+                    print("here")
+                    addressModel = AddressUser.objects.get(
+                        id=request.GET["id"], user=user
+                    )
+                except ObjectDoesNotExist:
+                    raise Exception("Address does not exists!")
+            else:
+                addressModel = AddressUser(user=user)
             addressModel.address = address
             addressModel.phone = phone
             addressModel.postal_code = postal_code
@@ -747,6 +754,38 @@ class AddAdress(APIView):
             addressModel.save()
             allAddress = reversed(AddressUser.objects.filter(user=user))
             return Response(AddressUserSerializer(allAddress, many=True).data)
+
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class RemoveAddress(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            print("2")
+            user = request.user
+            id = int(request.GET["id"])
+            try:
+                print(id)
+                AddressUser.objects.get(id=id, user=user).delete()
+
+            except ObjectDoesNotExist:
+                raise Exception("Address does not exists!")
+            allAddress = reversed(AddressUser.objects.filter(user=user))
+            return Response(AddressUserSerializer(allAddress, many=True).data)
+        except ProtectedError:
+            allAddress = reversed(AddressUser.objects.filter(user=user))
+            return Response(
+                AddressUserSerializer(allAddress, many=True).data,
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
@@ -871,7 +910,6 @@ class GetIPCartPrice(APIView):
     def get(self, request):
         try:
             IPCartId = request.GET["cart"]
-            print("eeeee")
             pCart = InProgressCart.objects.get(id=IPCartId)
             products = pCart.ipproductcart_set.all()
             postPrice = calculate_post_price(
@@ -895,6 +933,7 @@ class GetIPCartPrice(APIView):
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
+
 class GetIPCart(generics.RetrieveAPIView):
     authentication_classes = [
         TokenAuthentication,
@@ -905,6 +944,7 @@ class GetIPCart(generics.RetrieveAPIView):
     queryset = InProgressCart.objects.all()
     serializer_class = InProgressCartSerializer
     lookup_field = "id"
+
 
 class GetPaidCart(generics.RetrieveAPIView):
     authentication_classes = [

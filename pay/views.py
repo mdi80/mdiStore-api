@@ -22,7 +22,9 @@ CallbackURL = settings.HOST_NAME + "/pay/verify/"
 def send_request(request):
     cartId = int(request.GET["cart"])
     # authoization = request.headers["Authoization"]
-    resprice = requests.get(f"{settings.HOST_NAME}/api/get-ipcart-price/?cart={cartId}")
+    resprice = requests.get(
+        f"http://localhost:8000/api/get-ipcart-price/?cart={cartId}"
+    )
     if not resprice.ok:
         return HttpResponseBadRequest("Unkowon error happend!")
     price = resprice.json()
@@ -92,8 +94,11 @@ def verify(request):
             cart = aModel.cart
             pCart = PaidCart(user=cart.user)
             pCart.recorded_date = cart.recorded_date
-            pCart.address = cart.address
+            pCart.address = cart.address.address
             pCart.ref_id = refid
+            pCart.phone = cart.address.phone
+            pCart.postal_code = cart.address.postal_code
+
             pCart.authority = authority
             pCart.amount = aModel.price
             pCart.save()

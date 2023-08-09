@@ -306,7 +306,6 @@ class ProductPaidCartSerializer(serializers.ModelSerializer):
 
 class PaidCartSerializer(serializers.ModelSerializer):
     items = ProductPaidCartSerializer(source="productpaidcart_set", many=True)
-    address = AddressUserSerializer()
 
     class Meta:
         model = PaidCart
@@ -322,4 +321,6 @@ class PaidCartSerializer(serializers.ModelSerializer):
             "recived_date",
             "items",
             "address",
+            "postal_code",
+            "phone",
         ]
