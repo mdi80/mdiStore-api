@@ -333,6 +333,51 @@ class AddFavoriteProduct(APIView):
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
+class AllFavProduct(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        userfav = UserFavoriteProduct.objects.filter(user=request.user)
+        products = []
+        for row in userfav:
+            products.append(row.product)
+
+        return Response(
+            ProductSerilizer(products, many=True, context={"request": request}).data
+        )
+
+
+class RemoveFavProduct(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            id = int(request.GET["productId"])
+            del_product = Product.objects.get(id=id)
+            UserFavoriteProduct.objects.filter(user=request.user).filter(
+                product=del_product
+            ).delete()
+            userfav = UserFavoriteProduct.objects.filter(user=request.user)
+            products = []
+            for row in userfav:
+                products.append(row.product)
+            return Response(
+                ProductSerilizer(products, many=True, context={"request": request}).data
+            )
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
 class AddActToCommnet(APIView):
     authentication_classes = [
         TokenAuthentication,
@@ -373,6 +418,51 @@ class AddActToCommnet(APIView):
                     comAct.save()
             return Response(status=status.HTTP_202_ACCEPTED)
         except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetSelfComments(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = CommentProduct.objects.all()
+    serializer_class = CommentSerilizer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        queryset = queryset.filter(user=user)
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+
+            serializer = self.get_serializer(queryset, many=True)
+            serialized_data = serializer.data
+
+            returnedData = dict()
+            returnedData["lenght"] = len(serialized_data)
+
+            for row in serialized_data:
+                userId = row["user"]
+                try:
+                    row["username"] = get_user_model().objects.get(id=userId).username
+                except:
+                    row["username"] = "Unknown User"
+
+            if "endIndex" in self.request.GET:
+                serialized_data = serialized_data[: int(self.request.GET["endIndex"])]
+            if "startIndex" in self.request.GET:
+                serialized_data = serialized_data[int(self.request.GET["startIndex"]) :]
+            returnedData["data"] = serialized_data
+            return Response(returnedData)
+        except Exception:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -1027,3 +1117,56 @@ class DeleteMassages(APIView):
             messages = MessageModel.objects.filter(user=user).filter(active=True)
             data = MessageSerializer(messages, many=True).data
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetWaiting(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = InProgressCart.objects.all()
+    serializer_class = InProgressCartSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(user=self.request.user).order_by("-recorded_date")
+        return queryset
+
+
+class GetProc(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = PaidCart.objects.all()
+    serializer_class = PaidCartSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        queryset = queryset.filter(user=user).filter(send=False).order_by("-paid_date")
+        return queryset
+
+
+class GetSent(generics.ListAPIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    queryset = PaidCart.objects.all()
+    serializer_class = PaidCartSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        queryset = queryset.filter(user=user).filter(send=True).order_by("-send_date")
+        return queryset

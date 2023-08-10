@@ -7,6 +7,8 @@ import requests
 import json
 import random
 from . import models
+from api.utils import *
+import decimal
 
 
 ZP_API_REQUEST = f"https://api.zarinpal.com/pg/v4/payment/request.json"
@@ -22,19 +24,15 @@ CallbackURL = settings.HOST_NAME + "/pay/verify/"
 def send_request(request):
     cartId = int(request.GET["cart"])
     # authoization = request.headers["Authoization"]
-    resprice = requests.get(
-        f"http://localhost:8000/api/get-ipcart-price/?cart={cartId}"
+    pCart = InProgressCart.objects.get(id=cartId)
+    products = pCart.ipproductcart_set.all()
+    amount = calculate_total_price(products) + calculate_post_price(
+        products, pCart.address.state, pCart.address
     )
-    if not resprice.ok:
-        return HttpResponseBadRequest("Unkowon error happend!")
-    price = resprice.json()
-    cart = InProgressCart.objects.get(id=cartId)
-    amount = price["totalPrice"]
-
     data = {
         "merchant_id": settings.MERCHANT,
         "description": description,
-        "amount": amount,
+        "amount": int(amount),
         "callback_url": CallbackURL,
     }
 
@@ -92,15 +90,19 @@ def verify(request):
         code = 100
         if code >= 100:
             cart = aModel.cart
+            products = cart.ipproductcart_set.all()
+            post_price = calculate_post_price(
+                products, cart.address.state, cart.address
+            )
             pCart = PaidCart(user=cart.user)
             pCart.recorded_date = cart.recorded_date
             pCart.address = cart.address.address
             pCart.ref_id = refid
             pCart.phone = cart.address.phone
             pCart.postal_code = cart.address.postal_code
-
+            pCart.post_amount = post_price
             pCart.authority = authority
-            pCart.amount = aModel.price
+            pCart.total_amount = aModel.price
             pCart.save()
 
             products = cart.ipproductcart_set.all()
@@ -166,11 +168,9 @@ def verify(request):
 
 def payCartView(requst):
     pay_template = loader.get_template("pay.html")
-    print("sdaasd")
     context = {
         "data": {"amount": requst.GET["amount"], "authority": requst.GET["authority"]},
     }
     print("dsadsa")
 
     return HttpResponse(pay_template.render(context, requst))
-

@@ -102,6 +102,7 @@ class ProductSerilizer(serializers.ModelSerializer):
         return obj.commentproduct_set.count()
 
     def get_fav(self, obj):
+        print(self.context)
         fav = UserFavoriteProduct.objects.filter(
             user=self.context["request"].user, product=obj
         ).count()
@@ -122,6 +123,8 @@ class ProductSerilizer(serializers.ModelSerializer):
         return (obj.discount / obj.price) * 100
 
     def get_cart_count(self, obj):
+        print(self.context)
+
         cart = CurrentCartUser.objects.filter(user=self.context["request"].user)
         if not cart.exists():
             return 0
@@ -143,6 +146,7 @@ class CommentSerilizer(serializers.ModelSerializer):
     dislikes = serializers.SerializerMethodField()
     likestatus = serializers.SerializerMethodField()
     buyer = serializers.SerializerMethodField()
+    product_title = serializers.SerializerMethodField()
 
     class Meta:
         model = CommentProduct
@@ -157,6 +161,7 @@ class CommentSerilizer(serializers.ModelSerializer):
             "dislikes",
             "likestatus",
             "buyer",
+            "product_title",
         ]
 
     def get_likes(self, obj):
@@ -180,6 +185,9 @@ class CommentSerilizer(serializers.ModelSerializer):
         product = obj.product
 
         return SaleProduct.objects.filter(user=user, product=product).exists()
+
+    def get_product_title(self, obj):
+        return obj.product.title
 
 
 class ViewProductSerilizer(serializers.ModelSerializer):
@@ -323,7 +331,8 @@ class PaidCartSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "recorded_date",
-            "amount",
+            "post_amount",
+            "total_amount",
             "ref_id",
             "authority",
             "paid_date",
