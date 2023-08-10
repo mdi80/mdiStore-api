@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import *
 from django.db.models import Avg
-from .utils import get_color_name
+from .utils import *
 from mdistore.settings import HOST_NAME
 
 User = get_user_model()
@@ -285,6 +285,8 @@ class AddressUserSerializer(serializers.ModelSerializer):
 class InProgressCartSerializer(serializers.ModelSerializer):
     items = IPProductCartSerializer(source="ipproductcart_set", many=True)
     address = AddressUserSerializer()
+    total_amount = serializers.SerializerMethodField()
+    post_amount = serializers.SerializerMethodField()
 
     class Meta:
         model = InProgressCart
@@ -293,7 +295,16 @@ class InProgressCartSerializer(serializers.ModelSerializer):
             "recorded_date",
             "items",
             "address",
+            "total_amount",
+            "post_amount",
         ]
+
+    def get_total_amount(self, obj):
+        postPrice = calculate_post_price(obj.ipproductcart_set.all())
+        return calculate_total_price(obj.ipproductcart_set.all()) + postPrice
+
+    def get_post_amount(self, obj):
+        return calculate_post_price(obj.ipproductcart_set.all())
 
 
 class ProductPaidCartSerializer(serializers.ModelSerializer):
