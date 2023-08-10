@@ -163,7 +163,10 @@ class GetProduct(generics.RetrieveAPIView):
                 print("Add view")
                 view = ViewProduct(user=user, product=product)
                 view.save()
-
+            else:
+                view = ViewProduct.objects.filter(user=user, product=product).first()
+                view.visited = datetime.datetime.now()
+                view.save()
         except:
             print("Error while add Product view")
             pass
