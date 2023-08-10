@@ -959,3 +959,71 @@ class GetPaidCart(generics.RetrieveAPIView):
     queryset = PaidCart.objects.all()
     serializer_class = PaidCartSerializer
     lookup_field = "id"
+
+
+class GetMassages(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+
+            messages = MessageModel.objects.filter(user=user).filter(active=True)
+
+            data = MessageSerializer(messages, many=True).data
+            return Response(data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class MarkAsReadMassages(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+            id = int(request.GET["id"])
+            message = MessageModel.objects.filter(user=user).filter(id=id).first()
+            message.read = True
+            message.save()
+            messages = MessageModel.objects.filter(user=user).filter(active=True)
+            data = MessageSerializer(messages, many=True).data
+            return Response(data)
+        except Exception as e:
+            messages = MessageModel.objects.filter(user=user).filter(active=True)
+            data = MessageSerializer(messages, many=True).data
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteMassages(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            user = request.user
+            id = int(request.GET["id"])
+            message = MessageModel.objects.filter(user=user).filter(id=id).first()
+            message.active = False
+            message.save()
+            messages = MessageModel.objects.filter(user=user).filter(active=True)
+            data = MessageSerializer(messages, many=True).data
+            return Response(data)
+        except Exception as e:
+            messages = MessageModel.objects.filter(user=user).filter(active=True)
+            data = MessageSerializer(messages, many=True).data
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)

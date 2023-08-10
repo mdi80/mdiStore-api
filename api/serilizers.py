@@ -335,3 +335,9 @@ class PaidCartSerializer(serializers.ModelSerializer):
             "postal_code",
             "phone",
         ]
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MessageModel
+        fields = "__all__"

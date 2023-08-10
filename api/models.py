@@ -203,3 +203,11 @@ class SearchProduct(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     text = models.CharField(max_length=100)
     searched = models.DateTimeField(auto_now_add=True)
+
+
+class MessageModel(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    message = models.CharField(max_length=2000)
+    send_date = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)

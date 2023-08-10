@@ -173,3 +173,4 @@ def payCartView(requst):
     print("dsadsa")
 
     return HttpResponse(pay_template.render(context, requst))
+

@@ -38,4 +38,7 @@ urlpatterns = [
     path("get-ipcart-price/", GetIPCartPrice.as_view(), name="getipcartprice"),
     path("get-ipcart/<int:id>/", GetIPCart.as_view(), name="getipcart"),
     path("get-paid-cart/<int:id>/", GetPaidCart.as_view(), name="getpaidcart"),
+    path("get-messages/", GetMassages.as_view(), name="getmessages"),
+    path("make-read-message/", MarkAsReadMassages.as_view(), name="markasreadmessage"),
+    path("delete-message/", DeleteMassages.as_view(), name="deletemessage"),
 ]
