@@ -46,4 +46,8 @@ urlpatterns = [
     path("get-messages/", GetMassages.as_view(), name="getmessages"),
     path("make-read-message/", MarkAsReadMassages.as_view(), name="markasreadmessage"),
     path("delete-message/", DeleteMassages.as_view(), name="deletemessage"),
+    path("delete-order/", DeleteInProgressCart.as_view(), name="deleteorder"),
+    path("recive-order/", ReciveOrder.as_view(), name="reciveorder"),
+    path("track-order/", TrackOrder.as_view(), name="trackorder"),
 ]
+

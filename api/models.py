@@ -212,3 +212,8 @@ class MessageModel(models.Model):
     send_date = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
+
+
+class TrackOrderModel(models.Model):
+    cart = models.OneToOneField(PaidCart, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)

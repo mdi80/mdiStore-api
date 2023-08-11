@@ -64,6 +64,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 def getSuggestedCategory(index, user):
     vp = ViewProduct.objects.filter(user=user).select_related("product")
+    print(str(vp))
     vpd = ViewProductSerilizer(vp, many=True).data
     categories = dict()
     for item in vpd:
@@ -77,7 +78,7 @@ def getSuggestedCategory(index, user):
         orderedCat.append({"id": k, "count": categories[k]})
     orderedCat = sorted(orderedCat, key=lambda row: row["count"], reverse=True)
     if index < len(orderedCat):
-        return orderedCat[index]
+        return orderedCat[index]["id"]
     else:
         return -1
 
@@ -97,7 +98,6 @@ class GetHome(APIView):
             content = HomeContentSerilizer(query, many=True).data
             fetchedItems = []
             mRequest = request._request
-
             for item in content:
                 data = None
                 title = item["title"]
@@ -121,7 +121,9 @@ class GetHome(APIView):
                 elif item["api_name"] == "suggestedCategory":
                     categoryId = getSuggestedCategory(
                         item["params"]["index"] - 1, user.id
-                    )["id"]
+                    )
+                    if categoryId == -1:
+                        continue
                     mRequest.GET = {
                         "categoryId": categoryId,
                         "sort-mostView": True,
@@ -139,7 +141,7 @@ class GetHome(APIView):
                 )
             return Response(fetchedItems)
         except Exception as e:
-            return Response(e, status=status.HTTP_400_BAD_REQUEST)
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetProduct(generics.RetrieveAPIView):
@@ -1170,3 +1172,67 @@ class GetSent(generics.ListAPIView):
         user = self.request.user
         queryset = queryset.filter(user=user).filter(send=True).order_by("-send_date")
         return queryset
+
+
+class DeleteInProgressCart(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            id = int(request.GET["id"])
+            user = request.user
+            InProgressCart.objects.filter(user=user).get(id=id).delete()
+            return Response(status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class ReciveOrder(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            id = int(request.GET["id"])
+            cart = PaidCart.objects.get(id=id)
+            try:
+                TrackOrderModel.objects.filter(cart=cart).delete()
+            except:
+                pass
+            cart.recived_date = datetime.datetime.now().date()
+            cart.save()
+
+            return Response(PaidCartSerializer(cart).data)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+class TrackOrder(APIView):
+    authentication_classes = [
+        TokenAuthentication,
+    ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def get(self, request):
+        try:
+            cartId = int(request.GET["id"])
+
+            cart = PaidCart.objects.filter(user=request.user).get(id=cartId)
+
+            TrackOrderModel.objects.get_or_create(cart=cart)
+
+            return Response(status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            print(str(e))
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)

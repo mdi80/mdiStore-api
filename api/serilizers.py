@@ -102,7 +102,6 @@ class ProductSerilizer(serializers.ModelSerializer):
         return obj.commentproduct_set.count()
 
     def get_fav(self, obj):
-        print(self.context)
         fav = UserFavoriteProduct.objects.filter(
             user=self.context["request"].user, product=obj
         ).count()
@@ -123,8 +122,6 @@ class ProductSerilizer(serializers.ModelSerializer):
         return (obj.discount / obj.price) * 100
 
     def get_cart_count(self, obj):
-        print(self.context)
-
         cart = CurrentCartUser.objects.filter(user=self.context["request"].user)
         if not cart.exists():
             return 0
@@ -325,6 +322,7 @@ class ProductPaidCartSerializer(serializers.ModelSerializer):
 
 class PaidCartSerializer(serializers.ModelSerializer):
     items = ProductPaidCartSerializer(source="productpaidcart_set", many=True)
+    keeptracking = serializers.SerializerMethodField()
 
     class Meta:
         model = PaidCart
@@ -343,7 +341,11 @@ class PaidCartSerializer(serializers.ModelSerializer):
             "address",
             "postal_code",
             "phone",
+            "keeptracking",
         ]
+
+    def get_keeptracking(self, obj):
+        return TrackOrderModel.objects.filter(cart=obj).exists()
 
 
 class MessageSerializer(serializers.ModelSerializer):
